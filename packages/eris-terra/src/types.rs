@@ -1,7 +1,6 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Coin, Empty, StdResult, Uint128};
-use eris_chain_shared::chain_trait::Validateable;
+use cosmwasm_std::{Addr, Coin, Empty, Uint128};
 
 #[cw_serde]
 pub enum WithdrawType {
@@ -30,12 +29,20 @@ pub enum StageType {
 }
 
 #[cw_serde]
-pub struct MantaMsg {
-    pub swap: Swap,
+pub enum MultiSwapRouterType {
+    Manta {
+        addr: Addr,
+        msg: MantaMsg,
+    },
 }
 
 #[cw_serde]
-pub struct Swap {
+pub struct MantaMsg {
+    pub swap: MantaSwap,
+}
+
+#[cw_serde]
+pub struct MantaSwap {
     pub stages: Vec<Vec<(String, String)>>,
     pub min_return: Vec<Coin>,
 }
@@ -49,22 +56,11 @@ impl StageType {
 }
 
 pub type DenomType = AssetInfo;
+pub type CoinType = Asset;
 pub type CustomMsgType = Empty;
 pub type CustomQueryType = Empty;
-pub type CoinType = Asset;
 
-#[cw_serde]
-pub struct HubChainConfigInput {}
-
-impl Validateable<HubChainConfig> for HubChainConfigInput {
-    fn validate(&self, _api: &dyn Api) -> StdResult<HubChainConfig> {
-        Ok(HubChainConfig {})
-    }
-}
-#[cw_serde]
-pub struct HubChainConfig {}
-
-pub fn get_asset(info: AssetInfo, amount: Uint128) -> Asset {
+pub fn get_asset(info: DenomType, amount: Uint128) -> CoinType {
     Asset {
         info,
         amount,

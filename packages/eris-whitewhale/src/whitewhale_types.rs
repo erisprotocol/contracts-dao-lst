@@ -1,7 +1,6 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Empty, StdResult, Uint128};
+use cosmwasm_std::{Addr, Empty, Uint128};
 use cw_asset::{Asset, AssetInfo};
-use eris_chain_shared::chain_trait::Validateable;
 
 #[cw_serde]
 pub enum WithdrawType {
@@ -36,17 +35,6 @@ impl StageType {
 pub type DenomType = AssetInfo;
 pub type CustomMsgType = Empty;
 pub type CoinType = Asset;
-
-#[cw_serde]
-pub struct HubChainConfigInput {}
-
-impl Validateable<HubChainConfig> for HubChainConfigInput {
-    fn validate(&self, _api: &dyn Api) -> StdResult<HubChainConfig> {
-        Ok(HubChainConfig {})
-    }
-}
-#[cw_serde]
-pub struct HubChainConfig {}
 
 pub fn get_asset(info: AssetInfo, amount: Uint128) -> Asset {
     Asset {

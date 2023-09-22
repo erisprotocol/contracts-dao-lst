@@ -1,19 +1,23 @@
+use astroport::asset::Asset;
 use cosmwasm_std::{
-    coins, to_binary, Addr, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
+    coins, to_binary, Addr, Coin, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
 };
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
     adapters::whitewhaledex::WhiteWhalePair,
     denom::{MsgBurn, MsgCreateDenom, MsgMint},
-    types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType},
+    types::{CoinType, CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType},
 };
 
 pub struct Chain {
     pub contract: Addr,
 }
 
-impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig> for Chain {
+impl
+    ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, MultiSwapRouterType>
+    for Chain
+{
     fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
         MsgCreateDenom {
             sender: self.contract.to_string(),
@@ -95,6 +99,26 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                     msg: to_binary(&msg)?,
                 })),
             },
+        }
+    }
+
+    fn create_multi_swap_router_msgs(
+        &self,
+        router_type: MultiSwapRouterType,
+        assets: Vec<CoinType>,
+    ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>> {
+        let funds: Vec<Coin> =
+            assets.iter().map(|asset| asset.to_coin()).collect::<StdResult<_>>()?;
+
+        match router_type {
+            MultiSwapRouterType::Manta {
+                addr,
+                msg,
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: addr.to_string(),
+                funds,
+                msg: to_binary(&msg)?,
+            })]),
         }
     }
 }

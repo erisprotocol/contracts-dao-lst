@@ -16,9 +16,6 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 eris-chain-shared = { path = "../eris-chain-shared" }
 eris-kujira = { path = "../eris-kujira" }
 eris-whitewhale = { path = "../eris-whitewhale" }
-eris-injective = { path = "../eris-injective" }
-eris-osmosis = { path = "../eris-osmosis" }
-eris-sei = { path = "../eris-sei" }
 eris-terra = { path = "../eris-terra" }
 
 [features]

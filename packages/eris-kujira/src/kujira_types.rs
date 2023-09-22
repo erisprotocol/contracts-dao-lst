@@ -34,6 +34,25 @@ pub enum StageType {
     },
 }
 
+#[cw_serde]
+pub enum MultiSwapRouterType {
+    Manta {
+        addr: Addr,
+        msg: MantaMsg,
+    },
+}
+
+#[cw_serde]
+pub struct MantaMsg {
+    pub swap: Swap,
+}
+
+#[cw_serde]
+pub struct Swap {
+    pub stages: Vec<Vec<(String, String)>>,
+    pub min_return: Vec<Coin>,
+}
+
 impl StageType {
     pub fn fin(addr: &str) -> Self {
         Self::Fin {

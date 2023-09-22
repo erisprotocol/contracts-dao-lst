@@ -1,6 +1,14 @@
 use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
 
-pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubChainConfig> {
+pub trait ChainInterface<
+    TCustom,
+    TDenomType,
+    TCoinType,
+    TWithdrawType,
+    TStageType,
+    TMultiSwapRouterType,
+>
+{
     fn get_token_denom(&self, contract_addr: impl Into<String>, sub_denom: String) -> String {
         format!("factory/{0}/{1}", contract_addr.into(), sub_denom)
     }
@@ -31,6 +39,12 @@ pub trait ChainInterface<TCustom, TDenomType, TWithdrawType, TStageType, THubCha
         belief_price: Option<Decimal>,
         max_spread: Decimal,
     ) -> StdResult<CosmosMsg<TCustom>>;
+
+    fn create_multi_swap_router_msgs(
+        &self,
+        router_type: TMultiSwapRouterType,
+        assets: Vec<TCoinType>,
+    ) -> StdResult<Vec<CosmosMsg<TCustom>>>;
 }
 
 pub trait Validateable<T> {

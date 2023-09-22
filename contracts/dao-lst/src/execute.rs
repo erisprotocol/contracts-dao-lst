@@ -10,11 +10,12 @@ use eris::adapters::asset::AssetEx;
 use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
 
 use eris::hub::{
-    Batch, CallbackMsg, ExecuteMsg, FeeConfig, InstantiateMsg, PendingBatch, SingleSwapConfig,
-    StakeToken, UnbondRequest,
+    Batch, CallbackMsg, ExecuteMsg, FeeConfig, InstantiateMsg, MultiSwapRouter, PendingBatch,
+    SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, CustomMsgType, CustomQueryType, DenomType, WithdrawType,
+    chain, get_asset, get_balances_hashmap, CoinType, CustomMsgType, CustomQueryType, DenomType,
+    WithdrawType,
 };
 use itertools::Itertools;
 
@@ -87,10 +88,12 @@ pub fn instantiate(
 
     let sub_denom = msg.denom;
     let full_denom = chain.get_token_denom(env.contract.address, sub_denom.clone());
+
+    state.unlocked_coins.save(deps.storage, &vec![])?;
     state.stake_token.save(
         deps.storage,
         &StakeToken {
-            dao_interface: msg.dao_interface,
+            dao_interface: msg.dao_interface.validate(deps.api)?,
             utoken: msg.utoken,
             denom: full_denom.clone(),
             total_utoken_bonded: Uint128::zero(),
@@ -160,6 +163,7 @@ pub fn bond(
         .add_attribute("action", "erishub/bond"))
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn harvest(
     deps: DepsMut<CustomQueryType>,
     env: Env,
@@ -167,6 +171,7 @@ pub fn harvest(
     cw20_assets: Option<Vec<String>>,
     withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
     stages: Option<Vec<Vec<SingleSwapConfig>>>,
+    router: Option<MultiSwapRouter>,
     sender: Addr,
 ) -> ContractResult {
     let state = State::default();
@@ -198,14 +203,20 @@ pub fn harvest(
             .collect_vec()
     });
 
+    let multi_swap_router_msg = router.map(|router| CallbackMsg::MultiSwapRouter {
+        router,
+    });
+
     Ok(Response::new()
         // 1. Withdraw rewards
         .add_message(claim_msg)
         // 2. Withdraw / Destruct LPs
         .add_optional_callback(&env, withdrawal_msg)?
-        // 3 swap - multiple single stage swaps
+        // 3. swap - multiple single stage swaps
         .add_optional_callbacks(&env, swap_msgs)?
-        // 4. apply received total utoken to unlocked_coins
+        // 4. swap - single multi swap router
+        .add_optional_callback(&env, multi_swap_router_msg)?
+        // 5. apply received total utoken to unlocked_coins
         .add_message(check_received_coin_msg(
             &deps,
             &env,
@@ -285,6 +296,44 @@ pub fn single_stage_swap(
                 response = response.add_message(msg)
             }
         }
+    }
+
+    Ok(response)
+}
+
+/// swaps all unlocked coins to token
+pub fn multi_swap_router(
+    deps: DepsMut<CustomQueryType>,
+    env: Env,
+    router: MultiSwapRouter,
+) -> ContractResult {
+    let state = State::default();
+    let stake_token = state.stake_token.load(deps.storage)?;
+    let stake_token_denom_native = native_asset_info(stake_token.denom.clone());
+    let chain = chain(&env);
+
+    let get_denoms = || router.1.clone();
+    let balances = get_balances_hashmap(&deps, env, get_denoms)?;
+
+    let mut response = Response::new().add_attribute("action", "erishub/multi_swap_router");
+
+    let mut coins: Vec<CoinType> = vec![];
+
+    for asset in router.1 {
+        // validate that no swap token is already the expected one.
+        if asset == stake_token.utoken || asset == stake_token_denom_native {
+            return Err(ContractError::SwapFromNotAllowed(asset.to_string()));
+        }
+
+        let balance = balances.get(&asset.to_string()).copied().unwrap_or_default();
+        if !balance.is_zero() {
+            let coin = get_asset(asset, balance);
+            coins.push(coin);
+        }
+    }
+
+    if !coins.is_empty() {
+        response = response.add_messages(chain.create_multi_swap_router_msgs(router.0, coins)?);
     }
 
     Ok(response)
@@ -640,7 +689,7 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
     Ok(Response::new()
         .add_message(unbond_msg)
         .add_message(burn_msg)
-        .add_message(check_received_coin_msg(&deps, &env, stake, None)?)
+        // .add_message(check_received_coin_msg(&deps, &env, stake, None)?)
         .add_event(event)
         .add_attribute("action", "erishub/unbond"))
 }

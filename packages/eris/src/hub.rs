@@ -1,10 +1,12 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, Empty, StdResult, Uint128, VoteOption, WasmMsg,
+    to_binary, Addr, Api, CosmosMsg, Decimal, Empty, StdResult, Uint128, VoteOption, WasmMsg,
 };
 use cw20::Cw20ReceiveMsg;
-use eris_chain_adapter::types::{CustomMsgType, DenomType, StageType, WithdrawType};
+use eris_chain_adapter::types::{
+    CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType,
+};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -13,6 +15,8 @@ use serde::{Deserialize, Serialize};
 // Option<Decimal> = Price
 // Option<Uint128> = max amount, 0 = unlimited
 pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>);
+
+pub type MultiSwapRouter = (MultiSwapRouterType, Vec<DenomType>);
 
 #[cw_serde]
 pub struct InstantiateMsg {
@@ -39,20 +43,43 @@ pub struct InstantiateMsg {
     pub vote_operator: Option<String>,
 
     /// Dao specific config
-    pub dao_interface: DaoInterface,
+    pub dao_interface: DaoInterface<String>,
 }
 
 #[cw_serde]
-pub enum DaoInterface {
+pub enum DaoInterface<T> {
     Enterprise {
-        addr: Addr,
-        fund_distributor: Addr,
+        addr: T,
+        fund_distributor: T,
     },
     CW4 {
-        addr: Addr,
-        gov: Addr,
-        fund_distributor: Addr,
+        addr: T,
+        gov: T,
+        fund_distributor: T,
     },
+}
+
+impl DaoInterface<String> {
+    pub fn validate(&self, api: &dyn Api) -> StdResult<DaoInterface<Addr>> {
+        Ok(match self {
+            DaoInterface::Enterprise {
+                addr,
+                fund_distributor,
+            } => DaoInterface::Enterprise {
+                addr: api.addr_validate(addr)?,
+                fund_distributor: api.addr_validate(fund_distributor)?,
+            },
+            DaoInterface::CW4 {
+                addr,
+                gov,
+                fund_distributor,
+            } => DaoInterface::CW4 {
+                addr: api.addr_validate(addr)?,
+                gov: api.addr_validate(gov)?,
+                fund_distributor: api.addr_validate(fund_distributor)?,
+            },
+        })
+    }
 }
 
 #[cw_serde]
@@ -83,6 +110,7 @@ pub enum ExecuteMsg {
         cw20_assets: Option<Vec<String>>,
         withdrawals: Option<Vec<(WithdrawType, DenomType)>>,
         stages: Option<Vec<Vec<SingleSwapConfig>>>,
+        router: Option<MultiSwapRouter>,
     },
 
     /// Update Token amounts in unbonding batches to reflect any slashing or rounding errors
@@ -153,6 +181,9 @@ pub enum CallbackMsg {
     SingleStageSwap {
         // (Used dex, used denom, belief_price)
         stage: Vec<SingleSwapConfig>,
+    },
+    MultiSwapRouter {
+        router: MultiSwapRouter,
     },
     /// Following the swaps, stake the Token acquired to the whitelisted validators
     Reinvest {},
@@ -293,7 +324,7 @@ pub struct PendingBatch {
 #[cw_serde]
 pub struct StakeToken {
     /// address of the DAO
-    pub dao_interface: DaoInterface,
+    pub dao_interface: DaoInterface<Addr>,
     /// denom of the underlying token
     pub utoken: AssetInfo,
     // denom of the stake token

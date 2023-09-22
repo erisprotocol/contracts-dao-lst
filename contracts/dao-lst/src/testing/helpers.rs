@@ -1,10 +1,12 @@
+use astroport::asset::{native_asset_info, Asset, AssetInfo, AssetInfoExt};
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Decimal, Deps, Env,
-    OwnedDeps, QuerierResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128, WasmMsg,
+    from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Decimal, Deps, Env,
+    OwnedDeps, QuerierResult, StdResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128,
+    WasmMsg,
 };
 use eris_chain_adapter::types::{
-    chain, test_chain_config, CustomMsgType, CustomQueryType, DenomType, HubChainConfig, StageType,
+    chain, CoinType, CustomMsgType, CustomQueryType, DenomType, MultiSwapRouterType, StageType,
     WithdrawType,
 };
 use serde::de::DeserializeOwned;
@@ -72,16 +74,14 @@ pub(super) fn set_total_stake_supply(
     deps: &mut OwnedDeps<cosmwasm_std::MemoryStorage, MockApi, CustomQuerier, CustomQueryType>,
     total_supply: u128,
 ) {
+    let mut current = state.stake_token.load(deps.as_mut().storage).unwrap();
+
     state
         .stake_token
-        .save(
-            deps.as_mut().storage,
-            &StakeToken {
-                utoken: MOCK_UTOKEN.to_string(),
-                denom: get_stake_full_denom(),
-                total_supply: Uint128::new(total_supply),
-            },
-        )
+        .update(deps.as_mut().storage, |mut stake| -> StdResult<StakeToken> {
+            current.total_supply = Uint128::new(total_supply);
+            Ok(current)
+        })
         .unwrap();
 }
 
@@ -89,19 +89,27 @@ pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsg
     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: MOCK_CONTRACT_ADDR.to_string(),
         msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
-            snapshot: coin(amount, MOCK_UTOKEN),
-            snapshot_stake: coin(amount_stake, get_stake_full_denom()),
+            snapshot: mock_utoken_amount(amount),
+            snapshot_stake: native_asset_info(get_stake_full_denom()).with_balance(amount_stake),
         }))
         .unwrap(),
         funds: vec![],
     }))
 }
 
+pub fn mock_utoken() -> AssetInfo {
+    native_asset_info(MOCK_UTOKEN.to_string())
+}
+
+pub fn mock_utoken_amount(balance: impl Into<Uint128>) -> Asset {
+    native_asset_info(MOCK_UTOKEN.to_string()).with_balance(balance)
+}
 //--------------------------------------------------------------------------------------------------
 // Test setup
 //--------------------------------------------------------------------------------------------------
 
-pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryType> {
+pub(super) fn setup_test(
+) -> (OwnedDeps<MockStorage, MockApi, CustomQuerier, CustomQueryType>, StakeToken) {
     let mut deps = mock_dependencies();
 
     let res = instantiate(
@@ -111,16 +119,18 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, Cus
         InstantiateMsg {
             owner: "owner".to_string(),
             denom: "stake".to_string(),
-            utoken: MOCK_UTOKEN.to_string(),
+            utoken: mock_utoken(),
             epoch_period: 259200,   // 3 * 24 * 60 * 60 = 3 days
             unbond_period: 1814400, // 21 * 24 * 60 * 60 = 21 days
-            validators: vec!["alice".to_string(), "bob".to_string(), "charlie".to_string()],
             protocol_fee_contract: "fee".to_string(),
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
             operator: "operator".to_string(),
-            delegation_strategy: None,
             vote_operator: None,
-            chain_config: test_chain_config(),
+            dao_interface: eris::hub::DaoInterface::CW4 {
+                addr: "cw4".to_string(),
+                gov: "gov".to_string(),
+                fund_distributor: "fund".to_string(),
+            },
         },
     )
     .unwrap();
@@ -132,10 +142,12 @@ pub(super) fn setup_test() -> OwnedDeps<MockStorage, MockApi, CustomQuerier, Cus
         chain_test().create_denom_msg(get_stake_full_denom(), "stake".to_string())
     );
 
-    deps
+    let state = State::default().stake_token.load(deps.as_ref().storage).unwrap();
+    (deps, state)
 }
 
 pub fn chain_test(
-) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig> {
+) -> impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, MultiSwapRouterType>
+{
     chain(&mock_env())
 }

@@ -72,6 +72,7 @@ pub fn execute(
             stages,
             native_denoms,
             cw20_assets,
+            router,
         } => execute::harvest(
             deps,
             env,
@@ -79,6 +80,7 @@ pub fn execute(
             cw20_assets,
             withdrawals,
             stages,
+            router,
             info.sender,
         ),
         ExecuteMsg::Reconcile {} => execute::reconcile(deps, env),
@@ -188,6 +190,9 @@ fn callback(
         CallbackMsg::SingleStageSwap {
             stage,
         } => execute::single_stage_swap(deps, env, stage),
+        CallbackMsg::MultiSwapRouter {
+            router,
+        } => execute::multi_swap_router(deps, env, router),
         CallbackMsg::CheckReceivedCoin {
             snapshot,
             snapshot_stake,

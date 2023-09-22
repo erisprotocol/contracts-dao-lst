@@ -1,17 +1,18 @@
-use cosmwasm_std::{coins, Addr, CosmosMsg, Decimal, StdResult, Uint128};
+use cosmwasm_std::{coins, Addr, CosmosMsg, Decimal, Empty, StdResult, Uint128};
+use cw_asset::Asset;
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
     adapters::whitewhaledex::WhiteWhalePair,
     denom::{MsgBurn, MsgCreateDenom, MsgMint},
-    whitewhale_types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType},
+    whitewhale_types::{CoinType, CustomMsgType, DenomType, StageType, WithdrawType},
 };
 
 pub struct WhiteWhaleChain {
     pub contract: Addr,
 }
 
-impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
+impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, Empty>
     for WhiteWhaleChain
 {
     fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
@@ -81,5 +82,13 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                 addr,
             } => WhiteWhalePair(addr).swap_msg(denom, amount, belief_price, Some(max_spread)),
         }
+    }
+
+    fn create_multi_swap_router_msgs(
+        &self,
+        _router_type: Empty,
+        _assets: Vec<CoinType>,
+    ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>> {
+        Ok(vec![])
     }
 }

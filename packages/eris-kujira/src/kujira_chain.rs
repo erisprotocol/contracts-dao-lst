@@ -1,15 +1,18 @@
-use cosmwasm_std::{coin, Addr, CosmosMsg, Decimal, StdResult, Uint128};
+use cosmwasm_std::{coin, to_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use eris_chain_shared::chain_trait::ChainInterface;
 use kujira::msg::DenomMsg;
 
 use crate::{
     adapters::{bow_vault::BowVault, bw_vault::BlackWhaleVault, fin::Fin},
-    kujira_types::{CustomMsgType, DenomType, HubChainConfig, StageType, WithdrawType},
+    kujira_types::{
+        CoinType, CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType,
+    },
 };
 
 pub struct KujiraChain {}
 
-impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
+impl
+    ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, MultiSwapRouterType>
     for KujiraChain
 {
     fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
@@ -73,6 +76,23 @@ impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainC
                 belief_price,
                 Some(max_spread),
             ),
+        }
+    }
+
+    fn create_multi_swap_router_msgs(
+        &self,
+        router_type: MultiSwapRouterType,
+        funds: Vec<CoinType>,
+    ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>> {
+        match router_type {
+            MultiSwapRouterType::Manta {
+                addr,
+                msg,
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: addr.to_string(),
+                funds,
+                msg: to_binary(&msg)?,
+            })]),
         }
     }
 }

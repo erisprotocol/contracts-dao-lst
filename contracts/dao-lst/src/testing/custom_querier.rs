@@ -1,12 +1,9 @@
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_slice, Addr, Coin, Empty, FullDelegation, Querier, QuerierResult, QueryRequest,
-    SystemError, WasmQuery,
+    from_slice, Coin, Empty, Querier, QuerierResult, QueryRequest, SystemError, WasmQuery,
 };
 
-use crate::types::Delegation;
-
-use super::helpers::{err_unsupported_query, MOCK_UTOKEN};
+use super::helpers::err_unsupported_query;
 
 #[derive(Default)]
 pub(super) struct CustomQuerier {
@@ -33,21 +30,6 @@ impl Querier for CustomQuerier {
 impl CustomQuerier {
     pub fn set_bank_balances(&mut self, balances: &[Coin]) {
         self.bank_querier = BankQuerier::new(&[(MOCK_CONTRACT_ADDR, balances)])
-    }
-
-    pub fn set_staking_delegations(&mut self, delegations: &[Delegation]) {
-        let fds = delegations
-            .iter()
-            .map(|d| FullDelegation {
-                delegator: Addr::unchecked(MOCK_CONTRACT_ADDR),
-                validator: d.validator.clone(),
-                amount: Coin::new(d.amount, MOCK_UTOKEN),
-                can_redelegate: Coin::new(0, MOCK_UTOKEN),
-                accumulated_rewards: vec![],
-            })
-            .collect::<Vec<_>>();
-
-        self.staking_querier = StakingQuerier::new(MOCK_UTOKEN, &[], &fds);
     }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
