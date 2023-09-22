@@ -34,7 +34,7 @@ pub(super) fn mock_dependencies() -> OwnedDeps<MockStorage, MockApi, CustomQueri
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: CustomQuerier::default(),
-        custom_query_type: std::marker::PhantomData::default(),
+        custom_query_type: std::marker::PhantomData,
     }
 }
 
@@ -74,13 +74,11 @@ pub(super) fn set_total_stake_supply(
     deps: &mut OwnedDeps<cosmwasm_std::MemoryStorage, MockApi, CustomQuerier, CustomQueryType>,
     total_supply: u128,
 ) {
-    let mut current = state.stake_token.load(deps.as_mut().storage).unwrap();
-
     state
         .stake_token
         .update(deps.as_mut().storage, |mut stake| -> StdResult<StakeToken> {
-            current.total_supply = Uint128::new(total_supply);
-            Ok(current)
+            stake.total_supply = Uint128::new(total_supply);
+            Ok(stake)
         })
         .unwrap();
 }
@@ -150,4 +148,26 @@ pub fn chain_test(
 ) -> impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, MultiSwapRouterType>
 {
     chain(&mock_env())
+}
+
+pub trait WithoutGeneric {
+    fn without_generic(&self) -> CosmosMsg;
+}
+
+impl WithoutGeneric for CosmosMsg<CustomMsgType> {
+    fn without_generic(&self) -> CosmosMsg {
+        match self.clone() {
+            CosmosMsg::Bank(bank) => CosmosMsg::Bank(bank),
+            CosmosMsg::Custom(_) => todo!(),
+            CosmosMsg::Staking(bank) => CosmosMsg::Staking(bank),
+            CosmosMsg::Distribution(bank) => CosmosMsg::Distribution(bank),
+            CosmosMsg::Stargate {
+                ..
+            } => todo!(),
+            CosmosMsg::Ibc(_) => todo!(),
+            CosmosMsg::Wasm(bank) => CosmosMsg::Wasm(bank),
+            CosmosMsg::Gov(bank) => CosmosMsg::Gov(bank),
+            _ => todo!(),
+        }
+    }
 }

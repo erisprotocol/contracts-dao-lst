@@ -105,6 +105,7 @@ pub fn execute(
             epoch_period,
             unbond_period,
         } => execute::update_config(
+            env,
             deps,
             info.sender,
             protocol_fee_contract,

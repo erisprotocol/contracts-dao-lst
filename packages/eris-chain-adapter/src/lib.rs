@@ -7,22 +7,33 @@ pub mod types {
     use std::collections::HashMap;
 
     use eris_chain_shared::chain_trait::ChainInterface;
-    use eris_kujira::kujira_chain::KujiraChain;
 
-    pub use eris_kujira::kujira_types::CustomMsgType;
-    pub use eris_kujira::kujira_types::DenomType;
-    pub use eris_kujira::kujira_types::HubChainConfig;
-    pub use eris_kujira::kujira_types::HubChainConfigInput;
-    pub use eris_kujira::kujira_types::StageType;
-    pub use eris_kujira::kujira_types::WithdrawType;
+    pub use eris_kujira::chain::KujiraChain;
+    pub use eris_kujira::types::CoinType;
+    pub use eris_kujira::types::CustomMsgType;
+    pub use eris_kujira::types::CustomQueryType;
+    pub use eris_kujira::types::DenomType;
+    pub use eris_kujira::types::HubChainConfig;
+    pub use eris_kujira::types::HubChainConfigInput;
+    pub use eris_kujira::types::MantaMsg;
+    pub use eris_kujira::types::MantaSwap;
+    pub use eris_kujira::types::MultiSwapRouterType;
+    pub use eris_kujira::types::StageType;
+    pub use eris_kujira::types::WithdrawType;
 
     pub const CHAIN_TYPE: &str = "kujira";
 
     #[inline(always)]
     pub fn chain(
         _env: &Env,
-    ) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
-    {
+    ) -> impl ChainInterface<
+        CustomMsgType,
+        DenomType,
+        CoinType,
+        WithdrawType,
+        StageType,
+        MultiSwapRouterType,
+    > {
         KujiraChain {}
     }
 
@@ -57,16 +68,16 @@ pub mod types {
     use std::collections::HashMap;
 
     use eris_chain_shared::chain_trait::ChainInterface;
-    use eris_whitewhale::whitewhale_chain::WhiteWhaleChain;
-    use eris_whitewhale::whitewhale_types::get_asset;
+    use eris_whitewhale::chain::WhiteWhaleChain;
+    use eris_whitewhale::types::get_asset;
 
-    use eris_whitewhale::whitewhale_types::CoinType;
-    pub use eris_whitewhale::whitewhale_types::CustomMsgType;
-    pub use eris_whitewhale::whitewhale_types::DenomType;
-    pub use eris_whitewhale::whitewhale_types::HubChainConfig;
-    pub use eris_whitewhale::whitewhale_types::HubChainConfigInput;
-    pub use eris_whitewhale::whitewhale_types::StageType;
-    pub use eris_whitewhale::whitewhale_types::WithdrawType;
+    use eris_whitewhale::types::CoinType;
+    pub use eris_whitewhale::types::CustomMsgType;
+    pub use eris_whitewhale::types::DenomType;
+    pub use eris_whitewhale::types::HubChainConfig;
+    pub use eris_whitewhale::types::HubChainConfigInput;
+    pub use eris_whitewhale::types::StageType;
+    pub use eris_whitewhale::types::WithdrawType;
 
     pub const CHAIN_TYPE: &str = "migaloo";
 

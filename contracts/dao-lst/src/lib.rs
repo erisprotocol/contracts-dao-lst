@@ -11,6 +11,5 @@ pub mod claim;
 mod constants;
 pub mod error;
 pub mod gov;
-pub mod protos;
 #[cfg(test)]
 mod testing;

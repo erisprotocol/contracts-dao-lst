@@ -1,3 +1,4 @@
+use astroport::asset::AssetInfo;
 use cosmwasm_std::{coins, Addr, CosmosMsg, Decimal, Empty, StdResult, Uint128};
 use cw_asset::Asset;
 use eris_chain_shared::chain_trait::ChainInterface;
@@ -5,7 +6,7 @@ use eris_chain_shared::chain_trait::ChainInterface;
 use crate::{
     adapters::whitewhaledex::WhiteWhalePair,
     denom::{MsgBurn, MsgCreateDenom, MsgMint},
-    whitewhale_types::{CoinType, CustomMsgType, DenomType, StageType, WithdrawType},
+    types::{CoinType, CustomMsgType, DenomType, StageType, WithdrawType},
 };
 
 pub struct WhiteWhaleChain {
@@ -90,5 +91,34 @@ impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType,
         _assets: Vec<CoinType>,
     ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>> {
         Ok(vec![])
+    }
+
+    fn equals_asset_info(&self, denom: &DenomType, asset_info: &AssetInfo) -> bool {
+        match denom {
+            cw_asset::AssetInfoBase::Native(native) => match asset_info {
+                AssetInfo::Token {
+                    ..
+                } => false,
+                AssetInfo::NativeToken {
+                    denom,
+                } => denom == native,
+            },
+            cw_asset::AssetInfoBase::Cw20(cw20) => match asset_info {
+                AssetInfo::Token {
+                    contract_addr,
+                } => cw20 == contract_addr,
+                AssetInfo::NativeToken {
+                    ..
+                } => false,
+            },
+            _ => false,
+        }
+    }
+
+    fn get_coin(&self, info: DenomType, amount: Uint128) -> CoinType {
+        Asset {
+            info,
+            amount,
+        }
     }
 }

@@ -16,7 +16,7 @@ use super::helpers::mock_env_at_timestamp;
 
 #[test]
 fn check_claim() {
-    let (mut deps, stake) = setup_test();
+    let (mut deps, _) = setup_test();
 
     let res = execute(
         deps.as_mut(),

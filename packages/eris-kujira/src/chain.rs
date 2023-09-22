@@ -4,9 +4,7 @@ use kujira::msg::DenomMsg;
 
 use crate::{
     adapters::{bow_vault::BowVault, bw_vault::BlackWhaleVault, fin::Fin},
-    kujira_types::{
-        CoinType, CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType,
-    },
+    types::{CoinType, CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType},
 };
 
 pub struct KujiraChain {}
@@ -94,5 +92,24 @@ impl
                 msg: to_binary(&msg)?,
             })]),
         }
+    }
+
+    fn equals_asset_info(
+        &self,
+        denom_type: &DenomType,
+        asset_info: &astroport::asset::AssetInfo,
+    ) -> bool {
+        match asset_info {
+            astroport::asset::AssetInfo::Token {
+                ..
+            } => false,
+            astroport::asset::AssetInfo::NativeToken {
+                denom,
+            } => *denom == denom_type.to_string(),
+        }
+    }
+
+    fn get_coin(&self, denom: DenomType, amount: Uint128) -> CoinType {
+        denom.coin(&amount)
     }
 }

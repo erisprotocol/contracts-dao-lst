@@ -1,4 +1,4 @@
-use astroport::asset::Asset;
+use astroport::asset::AssetInfoExt;
 use cosmwasm_std::{
     coins, to_binary, Addr, Coin, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
 };
@@ -120,5 +120,17 @@ impl
                 msg: to_binary(&msg)?,
             })]),
         }
+    }
+
+    fn equals_asset_info(
+        &self,
+        denom: &DenomType,
+        asset_info: &astroport::asset::AssetInfo,
+    ) -> bool {
+        denom == asset_info
+    }
+
+    fn get_coin(&self, denom: DenomType, amount: Uint128) -> CoinType {
+        denom.with_balance(amount)
     }
 }

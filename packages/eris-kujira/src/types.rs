@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Coin, StdResult};
+use cosmwasm_std::{Addr, Api, Coin, Empty, StdResult};
 use eris_chain_shared::chain_trait::Validateable;
 use kujira::{denom::Denom, msg::KujiraMsg};
 
@@ -44,11 +44,11 @@ pub enum MultiSwapRouterType {
 
 #[cw_serde]
 pub struct MantaMsg {
-    pub swap: Swap,
+    pub swap: MantaSwap,
 }
 
 #[cw_serde]
-pub struct Swap {
+pub struct MantaSwap {
     pub stages: Vec<Vec<(String, String)>>,
     pub min_return: Vec<Coin>,
 }
@@ -64,6 +64,7 @@ impl StageType {
 pub type DenomType = Denom;
 pub type CustomMsgType = KujiraMsg;
 pub type CoinType = Coin;
+pub type CustomQueryType = Empty;
 
 #[cw_serde]
 pub struct HubChainConfigInput {}

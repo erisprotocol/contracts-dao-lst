@@ -4,7 +4,7 @@ use cosmwasm_std::{
 };
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 
-use crate::whitewhale_types::{CustomMsgType, DenomType};
+use crate::types::{CustomMsgType, DenomType};
 
 #[cw_serde]
 pub enum AssetInfo {

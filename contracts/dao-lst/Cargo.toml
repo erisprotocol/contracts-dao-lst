@@ -17,7 +17,7 @@ X-injective-X = []
 X-osmosis-X = []
 X-sei-X = []
 X-terra-X = []
-default = ["X-terra-X"]
+default = ["X-kujira-X"]
 
 [dependencies]
 cosmwasm-std = { version = "1.1.3", features = ["staking"] }
@@ -33,3 +33,4 @@ thiserror = { version = "1.0" }
 protobuf = "3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+kujira = "0.7.13"

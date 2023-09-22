@@ -14,8 +14,7 @@ use eris::hub::{
     SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
-    chain, get_asset, get_balances_hashmap, CoinType, CustomMsgType, CustomQueryType, DenomType,
-    WithdrawType,
+    chain, get_balances_hashmap, CoinType, CustomMsgType, CustomQueryType, DenomType, WithdrawType,
 };
 use itertools::Itertools;
 
@@ -193,7 +192,7 @@ pub fn harvest(
 
     // 3. Prepare swap stages
     let stages = state.get_or_preset(deps.storage, stages, &state.stages_preset, &sender)?;
-    validate_no_utoken_or_ustake_swap(&stages, &stake)?;
+    validate_no_utoken_or_ustake_swap(&env, &stages, &stake)?;
     let swap_msgs = stages.map(|stages| {
         stages
             .into_iter()
@@ -202,6 +201,10 @@ pub fn harvest(
             })
             .collect_vec()
     });
+
+    if router.is_some() {
+        state.assert_operator(deps.storage, &sender)?;
+    }
 
     let multi_swap_router_msg = router.map(|router| CallbackMsg::MultiSwapRouter {
         router,
@@ -319,15 +322,17 @@ pub fn multi_swap_router(
 
     let mut coins: Vec<CoinType> = vec![];
 
-    for asset in router.1 {
+    for denom in router.1 {
         // validate that no swap token is already the expected one.
-        if asset == stake_token.utoken || asset == stake_token_denom_native {
-            return Err(ContractError::SwapFromNotAllowed(asset.to_string()));
+        if chain.equals_asset_info(&denom, &stake_token.utoken)
+            || chain.equals_asset_info(&denom, &stake_token_denom_native)
+        {
+            return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
         }
 
-        let balance = balances.get(&asset.to_string()).copied().unwrap_or_default();
+        let balance = balances.get(&denom.to_string()).copied().unwrap_or_default();
         if !balance.is_zero() {
-            let coin = get_asset(asset, balance);
+            let coin = chain.get_coin(denom, balance);
             coins.push(coin);
         }
     }
@@ -341,14 +346,18 @@ pub fn multi_swap_router(
 
 #[allow(clippy::cmp_owned)]
 fn validate_no_utoken_or_ustake_swap(
+    env: &Env,
     stages: &Option<Vec<Vec<SingleSwapConfig>>>,
     stake_token: &StakeToken,
 ) -> Result<(), ContractError> {
+    let chain = chain(env);
     let stake_token_denom_native = native_asset_info(stake_token.denom.clone());
     if let Some(stages) = stages {
         for stage in stages {
             for (_addr, denom, _, _) in stage {
-                if *denom == stake_token.utoken || *denom == stake_token_denom_native {
+                if chain.equals_asset_info(denom, &stake_token.utoken)
+                    || chain.equals_asset_info(denom, &stake_token_denom_native)
+                {
                     return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
                 }
             }
@@ -870,6 +879,7 @@ pub fn accept_ownership(deps: DepsMut<CustomQueryType>, sender: Addr) -> Contrac
 
 #[allow(clippy::too_many_arguments)]
 pub fn update_config(
+    env: Env,
     deps: DepsMut<CustomQueryType>,
     sender: Addr,
     protocol_fee_contract: Option<String>,
@@ -923,7 +933,11 @@ pub fn update_config(
     }
 
     if stages_preset.is_some() {
-        validate_no_utoken_or_ustake_swap(&stages_preset, &state.stake_token.load(deps.storage)?)?;
+        validate_no_utoken_or_ustake_swap(
+            &env,
+            &stages_preset,
+            &state.stake_token.load(deps.storage)?,
+        )?;
     }
 
     if let Some(stages_preset) = stages_preset {

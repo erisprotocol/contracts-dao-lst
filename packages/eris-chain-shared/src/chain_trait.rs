@@ -1,3 +1,4 @@
+use astroport::asset::AssetInfo;
 use cosmwasm_std::{Addr, Api, CosmosMsg, Decimal, StdResult, Uint128};
 
 pub trait ChainInterface<
@@ -12,6 +13,9 @@ pub trait ChainInterface<
     fn get_token_denom(&self, contract_addr: impl Into<String>, sub_denom: String) -> String {
         format!("factory/{0}/{1}", contract_addr.into(), sub_denom)
     }
+
+    fn equals_asset_info(&self, denom: &TDenomType, asset_info: &AssetInfo) -> bool;
+    fn get_coin(&self, denom: TDenomType, amount: Uint128) -> TCoinType;
 
     fn create_denom_msg(&self, full_denom: String, sub_denom: String) -> CosmosMsg<TCustom>;
     // this can sometimes be multiple messages to mint + transfer

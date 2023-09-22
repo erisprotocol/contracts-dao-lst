@@ -15,4 +15,4 @@ schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 kujira = "0.7.13"
 eris-chain-shared = { path = "../eris-chain-shared"}
-
+astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }

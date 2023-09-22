@@ -19,6 +19,8 @@ cw20 = { version = "0.13.2" }
 prost = {version = "0.11.0", default-features = false, features = ["prost-derive"]}
 prost-types = {version = "0.11.1", default-features = false}
 cw-asset = "3.0.0"
+astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+
 # terraswap = { git = "https://github.com/White-Whale-Defi-Platform/white-whale-core.git", default-features = false, rev = "0950abebcec5c67a0ff2d83ce730abdef8f84369" }
 
 # [dev-dependencies]

@@ -1,9 +1,9 @@
-use astroport::asset::native_asset_info;
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{coin, coins, to_binary, Addr, CosmosMsg, SubMsg, Uint128, WasmMsg};
 use eris::hub::{CallbackMsg, ExecuteMsg};
 
 use eris_chain_adapter::types::{MantaMsg, MantaSwap, MultiSwapRouterType};
+use kujira::denom::Denom;
 
 use crate::contract::execute;
 use crate::error::ContractError;
@@ -30,12 +30,13 @@ fn harvesting_with_balance() {
         },
     };
 
+    let denom: Denom = "usk".into();
     let router = (
         MultiSwapRouterType::Manta {
             addr: Addr::unchecked("mantaswap"),
             msg: mnta_msg.clone(),
         },
-        vec![native_asset_info("usk".to_string())],
+        vec![denom],
     );
 
     let res = execute(
