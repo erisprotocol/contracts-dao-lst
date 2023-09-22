@@ -9,15 +9,17 @@ homepage = "https://www.erisprotocol.com"
 repository = "https://github.com/erisprotocol/contracts-kujira"
 
 [dependencies]
-cosmwasm-std =  { version = "1.1.3", features = ["stargate"] }
+cosmwasm-std = { version = "1.1.3", features = ["stargate"] }
 cosmwasm-schema = "1.1.3"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-eris-chain-shared = { path = "../eris-chain-shared"}
+eris-chain-shared = { path = "../eris-chain-shared" }
 osmosis-std-derive = "0.13.2"
-cw20 = { version = "0.13.2" }
-prost = {version = "0.11.0", default-features = false, features = ["prost-derive"]}
-prost-types = {version = "0.11.1", default-features = false}
+cw20 = "1.1.0"
+prost = { version = "0.11.0", default-features = false, features = [
+    "prost-derive",
+] }
+prost-types = { version = "0.11.1", default-features = false }
 cw-asset = "3.0.0"
 astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
 
@@ -25,4 +27,3 @@ astroport = { git = "https://github.com/astroport-fi/astroport-core.git", defaul
 
 # [dev-dependencies]
 # serde_json = "1.0.93"
-

@@ -11,3 +11,4 @@ echo "Applying $1"
 
 find $projectPath -type f -name 'Cargo.toml' -exec echo {} +
 find $projectPath -type f -name 'Cargo.toml' -exec sed -i "s/\"X-.*-X\"/\"X-$1-X\"/g" {} +
+find $projectPath -type f -name 'Cargo.toml' -exec sed -i "s/\"eris-dao-lst-.*\"/\"eris-dao-lst-$1\"/g" {} +

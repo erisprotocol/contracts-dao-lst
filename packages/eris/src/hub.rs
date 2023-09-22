@@ -53,8 +53,11 @@ pub enum DaoInterface<T> {
         fund_distributor: T,
     },
     CW4 {
+        // calling bond, unbond, claim /
         addr: T,
+        // calling vote
         gov: T,
+        // calling claimrewards
         fund_distributor: T,
     },
 }

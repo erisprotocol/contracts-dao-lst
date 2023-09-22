@@ -1,5 +1,10 @@
 [workspace]
-members = ["contracts/*", "packages/*"]
+members = [
+    "contracts/amp-governance/*",
+    "contracts/dao-lst",
+    "contracts/dao-lst-factory",
+    "packages/*",
+]
 
 
 [profile.release.package.eris]

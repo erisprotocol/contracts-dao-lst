@@ -20,8 +20,6 @@ pub struct InstantiateMsg {
     pub hub_addr: String,
     /// Min voting power required
     pub quorum_bps: u16,
-    /// Specifies wether voting should be weighted based on VP
-    pub use_weighted_vote: bool,
 }
 
 /// This structure describes the execute messages available in the contract.
@@ -47,9 +45,6 @@ pub enum ExecuteMsg {
     UpdateConfig {
         /// ChangeValidatorsLimit changes the max amount of validators that can be voted at once to receive delegations
         quorum_bps: Option<u16>,
-
-        /// Updates if weighted voting is used
-        use_weighted_vote: Option<bool>,
     },
     // Admin action to remove a user
     RemoveUser {
@@ -135,9 +130,6 @@ pub struct ConfigResponse {
 
     /// Required min quorum (voted voting power / total voting power must be > quorum to allow the contract to vote)
     pub quorum_bps: u16,
-
-    #[serde(default)]
-    pub use_weighted_vote: bool,
 }
 
 impl ConfigResponse {

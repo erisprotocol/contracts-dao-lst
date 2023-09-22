@@ -37,11 +37,6 @@ pub mod types {
         KujiraChain {}
     }
 
-    #[inline(always)]
-    pub fn test_chain_config() -> HubChainConfigInput {
-        HubChainConfigInput {}
-    }
-
     /// queries all balances and converts it to a hashmap
     pub fn get_balances_hashmap<F>(
         deps: &DepsMut<CustomQueryType>,
