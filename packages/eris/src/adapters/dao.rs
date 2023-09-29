@@ -59,7 +59,7 @@ pub struct EnterpriseUnstakeCw20Msg {
 }
 
 #[cw_serde]
-pub enum FundDistributorExecuteMsg {
+pub enum ExecuteMsg {
     ClaimRewards(ClaimRewardsMsg),
 }
 
@@ -182,7 +182,7 @@ impl StakeToken {
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
-                msg: to_binary(&FundDistributorExecuteMsg::ClaimRewards(ClaimRewardsMsg {
+                msg: to_binary(&ExecuteMsg::ClaimRewards(ClaimRewardsMsg {
                     user: env.contract.address.to_string(),
                     native_denoms: Some(native_denoms),
                     cw20_assets: Some(cw20_assets),
@@ -194,7 +194,7 @@ impl StakeToken {
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
-                msg: to_binary(&FundDistributorExecuteMsg::ClaimRewards(ClaimRewardsMsg {
+                msg: to_binary(&ExecuteMsg::ClaimRewards(ClaimRewardsMsg {
                     user: env.contract.address.to_string(),
                     native_denoms: None,
                     cw20_assets: None,

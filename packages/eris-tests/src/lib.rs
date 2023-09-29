@@ -3,7 +3,6 @@ pub mod asset_ex;
 pub mod base;
 pub mod contracts;
 mod custom_gov;
-pub mod fund_distributor_contract;
 pub mod model;
 pub mod modules;
 use std::str::FromStr;

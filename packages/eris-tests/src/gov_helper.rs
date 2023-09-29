@@ -65,7 +65,26 @@ impl EscrowHelper {
             .unwrap();
     }
 
-    pub fn mint_amp_token(&self, router_ref: &mut CustomApp, to: String, amount: u128) {
+    pub fn mint_utoken(&self, router_ref: &mut CustomApp, to: impl Into<String>, amount: u128) {
+        let to = to.into();
+        router_ref
+            .sudo(cw_multi_test::SudoMsg::Bank(cw_multi_test::BankSudo::Mint {
+                to_address: "bank".to_string(),
+                amount: vec![coin(amount, self.base.utoken_denom())],
+            }))
+            .unwrap();
+
+        router_ref
+            .send_tokens(
+                Addr::unchecked("bank"),
+                Addr::unchecked(to),
+                &coins(amount, self.base.utoken_denom()),
+            )
+            .unwrap();
+    }
+
+    pub fn mint_amp_token(&self, router_ref: &mut CustomApp, to: impl Into<String>, amount: u128) {
+        let to = to.into();
         router_ref
             .sudo(cw_multi_test::SudoMsg::Bank(cw_multi_test::BankSudo::Mint {
                 to_address: "bank".to_string(),
@@ -80,17 +99,6 @@ impl EscrowHelper {
                 &coins(amount, self.base.amp_token.get_address_string()),
             )
             .unwrap();
-
-        // let msg = cw20::Cw20ExecuteMsg::Mint {
-        //     recipient: to.clone(),
-        //     amount: Uint128::from(amount),
-        // };
-        // let res = router_ref
-        //     .execute_contract(self.owner.clone(), self.base.amp_lp.get_address(), &msg, &[])
-        //     .unwrap();
-        // assert_eq!(res.events[1].attributes[1], attr("action", "mint"));
-        // assert_eq!(res.events[1].attributes[2], attr("to", to));
-        // assert_eq!(res.events[1].attributes[3], attr("amount", Uint128::from(amount)));
     }
 
     pub fn ve_lock_lp(

@@ -193,6 +193,7 @@ pub fn harvest(
     // 3. Prepare swap stages
     let stages = state.get_or_preset(deps.storage, stages, &state.stages_preset, &sender)?;
     validate_no_utoken_or_ustake_swap(&env, &stages, &stake)?;
+
     let swap_msgs = stages.map(|stages| {
         stages
             .into_iter()
@@ -202,13 +203,15 @@ pub fn harvest(
             .collect_vec()
     });
 
-    if router.is_some() {
+    let multi_swap_router_msg = if let Some(router) = router {
         state.assert_operator(deps.storage, &sender)?;
-    }
-
-    let multi_swap_router_msg = router.map(|router| CallbackMsg::MultiSwapRouter {
-        router,
-    });
+        validate_no_utoken_or_ustake_coins(&env, &router.1, &stake)?;
+        Some(CallbackMsg::MultiSwapRouter {
+            router,
+        })
+    } else {
+        None
+    };
 
     Ok(Response::new()
         // 1. Withdraw rewards
@@ -361,6 +364,24 @@ fn validate_no_utoken_or_ustake_swap(
                     return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
                 }
             }
+        }
+    }
+    Ok(())
+}
+
+#[allow(clippy::cmp_owned)]
+fn validate_no_utoken_or_ustake_coins(
+    env: &Env,
+    denoms: &Vec<DenomType>,
+    stake_token: &StakeToken,
+) -> Result<(), ContractError> {
+    let chain = chain(env);
+    let stake_token_denom_native = native_asset_info(stake_token.denom.clone());
+    for denom in denoms {
+        if chain.equals_asset_info(denom, &stake_token.utoken)
+            || chain.equals_asset_info(denom, &stake_token_denom_native)
+        {
+            return Err(ContractError::SwapFromNotAllowed(denom.to_string()));
         }
     }
     Ok(())
@@ -641,6 +662,8 @@ pub fn queue_unbond(
         .add_attribute("action", "erishub/queue_unbond"))
 }
 
+// is allowed as denom can require a clone based on the chain
+#[allow(clippy::redundant_clone)]
 pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let mut stake = state.stake_token.load(deps.storage)?;
@@ -687,6 +710,7 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
     // apply burn to the stored total supply and save state
     stake.total_supply = stake.total_supply.checked_sub(pending_batch.ustake_to_burn)?;
     state.stake_token.save(deps.storage, &stake)?;
+
     let burn_msg: CosmosMsg<CustomMsgType> =
         chain(&env).create_burn_msg(stake.denom.clone(), pending_batch.ustake_to_burn);
 

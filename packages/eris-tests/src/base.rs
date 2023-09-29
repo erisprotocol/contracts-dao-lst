@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use astroport::asset::native_asset_info;
+use astroport::asset::{native_asset_info, AssetInfo};
 use cosmwasm_schema::cw_serde;
 
 use cosmwasm_std::{
@@ -19,7 +19,10 @@ use eris::arb_vault::LsdConfig;
 // use eris::arb_vault::LsdConfig;
 use eris_chain_adapter::types::{CustomMsgType, CustomQueryType};
 
-use crate::{contracts::arb_contract, fund_distributor_contract, modules::types::UsedCustomModule};
+use crate::{
+    contracts::{self, arb_contract},
+    modules::types::UsedCustomModule,
+};
 
 pub const MULTIPLIER: u64 = 1_000_000;
 
@@ -71,6 +74,7 @@ pub struct BaseErisTestPackage {
     pub cw3: ContractInfoWrapper,
     pub cw4: ContractInfoWrapper,
     pub fund: ContractInfoWrapper,
+    pub swap: ContractInfoWrapper,
 
     pub arb_vault: ContractInfoWrapper,
     pub arb_fake_contract: ContractInfoWrapper,
@@ -114,6 +118,7 @@ impl BaseErisTestPackage {
             cw3: None.into(),
             cw4: None.into(),
             fund: None.into(),
+            swap: None.into(),
         };
 
         // base_pack.init_token(router, msg.owner.clone());
@@ -122,7 +127,7 @@ impl BaseErisTestPackage {
 
         base_pack.init_not_supported(router, msg.owner.clone());
 
-        base_pack.init_arb_fake_contract(router, msg.owner.clone());
+        base_pack.init_arb_fake_contract(router, msg.owner);
 
         base_pack
     }
@@ -132,7 +137,7 @@ impl BaseErisTestPackage {
         self.init_prop_gauges(router, owner.clone());
         // self.init_stader(router, msg.owner.clone());
         // self.init_steak_hub(router, owner.clone());
-        self.init_arb_vault(router, owner.clone());
+        self.init_arb_vault(router, owner);
     }
 
     #[cfg(feature = "X-sei-X")]
@@ -180,6 +185,14 @@ impl BaseErisTestPackage {
     //     .into()
     // }
 
+    pub fn utoken_denom(&self) -> String {
+        "factory/contract/uDAO".to_string()
+    }
+
+    pub fn utoken(&self) -> AssetInfo {
+        native_asset_info(self.utoken_denom())
+    }
+
     fn init_hub(&mut self, router: &mut CustomApp, owner: Addr) {
         let cw4_contract = Box::new(ContractWrapper::new_with_empty(
             manta_stake::contract::execute,
@@ -194,8 +207,8 @@ impl BaseErisTestPackage {
                 &manta_stake::msg::InstantiateMsg {
                     admin: Some("admin".to_string()),
                     min_bond: Uint128::new(1000000u128),
-                    unbonding_period: Duration::Time(21 * 24 * 60 * 60).into(),
-                    denom: manta_cw20::Denom::Native("utoken".to_string()),
+                    unbonding_period: Duration::Time(21 * 24 * 60 * 60),
+                    denom: manta_cw20::Denom::Native(self.utoken_denom()),
                     tokens_per_weight: Uint128::new(1000000u128),
                 },
                 &[],
@@ -241,16 +254,16 @@ impl BaseErisTestPackage {
         .into();
 
         let fund_contract = Box::new(ContractWrapper::new_with_empty(
-            fund_distributor_contract::execute,
-            fund_distributor_contract::instantiate,
-            fund_distributor_contract::query,
+            contracts::fund_distributor::execute,
+            contracts::fund_distributor::instantiate,
+            contracts::fund_distributor::query,
         ));
         let fund_code_id = router.store_code(fund_contract);
         let fund_instance = router
             .instantiate_contract(
                 fund_code_id,
                 owner.clone(),
-                &fund_distributor_contract::InstantiateMsg {},
+                &contracts::fund_distributor::InstantiateMsg {},
                 &[],
                 "Fund distributor",
                 None,
@@ -259,6 +272,28 @@ impl BaseErisTestPackage {
         self.fund = Some(ContractInfo {
             address: fund_instance.clone(),
             code_id: fund_code_id,
+        })
+        .into();
+
+        let swap_contract = Box::new(ContractWrapper::new_with_empty(
+            contracts::manta_swap_contract::execute,
+            contracts::manta_swap_contract::instantiate,
+            contracts::manta_swap_contract::query,
+        ));
+        let swap_code_id = router.store_code(swap_contract);
+        let swap_instance = router
+            .instantiate_contract(
+                swap_code_id,
+                owner.clone(),
+                &contracts::manta_swap_contract::InstantiateMsg {},
+                &[],
+                "Manta Swap",
+                None,
+            )
+            .unwrap();
+        self.swap = Some(ContractInfo {
+            address: swap_instance,
+            code_id: swap_code_id,
         })
         .into();
 
@@ -273,9 +308,9 @@ impl BaseErisTestPackage {
         let init_msg = eris::hub::InstantiateMsg {
             denom: "ampSTAKE".into(),
             operator: "operator".to_string(),
-            utoken: native_asset_info("utoken".to_string()),
+            utoken: self.utoken(),
             owner: owner.to_string(),
-            epoch_period: 1 * 24 * 60 * 60,   // 1 day
+            epoch_period: 24 * 60 * 60,       // 1 day
             unbond_period: 21 * 24 * 60 * 60, // 21 days
             protocol_fee_contract: "fee".to_string(),
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),

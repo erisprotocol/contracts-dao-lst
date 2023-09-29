@@ -804,7 +804,7 @@ fn reconciling() {
         res.messages[1],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&assert_balance_msg.clone()).unwrap(),
+            msg: to_binary(&assert_balance_msg).unwrap(),
             funds: vec![]
         }))
     );
@@ -877,7 +877,7 @@ fn reconciling() {
         deps.as_mut(),
         mock_env_at_timestamp(35000),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
-        assert_balance_msg.clone(),
+        assert_balance_msg,
     )
     .expect("Should succeed");
 }
