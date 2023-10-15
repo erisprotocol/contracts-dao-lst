@@ -1,5 +1,5 @@
 [package]
-name = "eris-dao-lst-factory"
+name = "eris-lst-factory"
 version = "1.0.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2021"

@@ -27,7 +27,6 @@ pub struct InstantiateMsg {
 pub enum ExecuteMsg {
     InitProp {
         proposal_id: u64,
-        end_time_s: u64,
     },
 
     /// Vote allows a vAMP holder to cast votes on which validators should get the delegations
@@ -161,7 +160,7 @@ pub struct PropInfo {
     #[serde(default)]
     pub total_vp: Uint128,
 
-    pub current_vote: Option<VoteOption>,
+    pub current_vote: VoteOption,
 }
 
 impl PropInfo {
@@ -237,24 +236,25 @@ impl PropInfo {
         votes
     }
 
-    pub fn get_wanted_vote(&self, total_vp: Uint128, quorum: u16) -> StdResult<Option<VoteOption>> {
+    pub fn get_wanted_vote(&self, total_vp: Uint128, quorum: u16) -> StdResult<VoteOption> {
         let current = self.voted_vp();
         let voted = Decimal::from_ratio(current, total_vp);
         let quorum = BasicPoints::try_from(quorum)?.decimal();
 
         let result = if voted < quorum {
-            None
+            // for DAOs automatically abstain
+            VoteOption::Abstain
         } else if self.yes_vp >= self.no_vp
             && self.yes_vp >= self.abstain_vp
             && self.yes_vp >= self.nwv_vp
         {
-            Some(VoteOption::Yes)
+            VoteOption::Yes
         } else if self.no_vp >= self.abstain_vp && self.no_vp >= self.nwv_vp {
-            Some(VoteOption::No)
+            VoteOption::No
         } else if self.nwv_vp >= self.abstain_vp {
-            Some(VoteOption::NoWithVeto)
+            VoteOption::NoWithVeto
         } else {
-            Some(VoteOption::Abstain)
+            VoteOption::Abstain
         };
 
         Ok(result)
@@ -312,7 +312,7 @@ fn test_weighted_votes_empty() {
         no_vp: Uint128::zero(),
         nwv_vp: Uint128::zero(),
         total_vp: Uint128::zero(),
-        current_vote: None,
+        current_vote: VoteOption::Abstain,
     };
 
     let votes = prop.get_weighted_votes();
@@ -329,7 +329,7 @@ fn test_weighted_votes_some() {
         no_vp: Uint128::new(20),
         nwv_vp: Uint128::zero(),
         total_vp: Uint128::zero(),
-        current_vote: None,
+        current_vote: VoteOption::Abstain,
     };
 
     let votes = prop.get_weighted_votes();
@@ -348,7 +348,7 @@ fn test_weighted_votes_single() {
         no_vp: Uint128::zero(),
         nwv_vp: Uint128::zero(),
         total_vp: Uint128::zero(),
-        current_vote: None,
+        current_vote: VoteOption::Abstain,
     };
 
     let votes = prop.get_weighted_votes();

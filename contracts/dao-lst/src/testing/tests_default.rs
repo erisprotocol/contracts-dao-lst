@@ -55,7 +55,12 @@ fn proper_instantiation() {
             withdrawals_preset: vec![],
             allow_donations: false,
             vote_operator: None,
-            utoken: native_asset_info(MOCK_UTOKEN.to_string())
+            utoken: native_asset_info(MOCK_UTOKEN.to_string()),
+            dao_interface: eris::hub::DaoInterface::Cw4 {
+                addr: Addr::unchecked("cw4"),
+                gov: Addr::unchecked("gov"),
+                fund_distributor: Addr::unchecked("fund"),
+            },
         }
     );
 
@@ -111,7 +116,10 @@ fn bonding() {
     assert_eq!(res.messages.len(), 1 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[index].msg, stake.deposit_msg(Uint128::new(1000000)).unwrap());
+    assert_eq!(
+        res.messages[index].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(1000000)).unwrap()
+    );
 
     index += 1;
     for msg in mint_msgs {
@@ -151,7 +159,10 @@ fn bonding() {
     assert_eq!(res.messages.len(), 1 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[index].msg, stake.deposit_msg(Uint128::new(12345)).unwrap());
+    assert_eq!(
+        res.messages[index].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(12345)).unwrap()
+    );
 
     index += 1;
     for msg in mint_msgs {
@@ -201,7 +212,10 @@ fn donating() {
     assert_eq!(res.messages.len(), 1 + mint_msgs.len());
 
     let mut index = 0;
-    assert_eq!(res.messages[index].msg, stake.deposit_msg(Uint128::new(1000000)).unwrap());
+    assert_eq!(
+        res.messages[index].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(1000000)).unwrap()
+    );
 
     index += 1;
     for msg in mint_msgs {
@@ -272,7 +286,10 @@ fn donating() {
     .unwrap();
 
     assert_eq!(res.messages.len(), 1);
-    assert_eq!(res.messages[0].msg, stake.deposit_msg(Uint128::new(12345)).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(12345)).unwrap()
+    );
 
     deps.querier.set_bank_balances(&[coin(0, MOCK_UTOKEN)]);
 
@@ -314,7 +331,10 @@ fn harvesting() {
     .unwrap();
 
     assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0].msg, stake.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap()
+    );
     assert_eq!(res.messages[1], check_received_coin(0, 0));
 
     assert_eq!(
@@ -351,7 +371,10 @@ fn harvesting_with_balance() {
     .unwrap();
 
     assert_eq!(res.messages.len(), 3);
-    assert_eq!(res.messages[0].msg, stake.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap()
+    );
     assert_eq!(res.messages[1], check_received_coin(1000, 100));
 
     assert_eq!(
@@ -478,7 +501,10 @@ fn reinvesting() {
         Decimal::from_ratio(1u128, 100u128).checked_mul_uint(total).expect("expects fee result");
     let delegated = total.saturating_sub(fee);
 
-    assert_eq!(res.messages[0].msg, stake.deposit_msg(delegated).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, delegated).unwrap()
+    );
     assert_eq!(
         res.messages[1].msg.without_generic(),
         native_asset_info(MOCK_UTOKEN.to_string()).with_balance(fee).into_msg("fee").unwrap()
@@ -671,7 +697,7 @@ fn submitting_batch() {
 
     assert_eq!(res.messages.len(), 2);
 
-    assert_eq!(res.messages[0].msg, stake.unbond_msg(Uint128::new(95197)).unwrap());
+    assert_eq!(res.messages[0].msg, stake.dao_interface.unbond_msg(Uint128::new(95197)).unwrap());
 
     assert_eq!(
         res.messages[1].msg,
@@ -709,12 +735,12 @@ fn submitting_batch() {
         res,
         StateResponse {
             total_ustake,
-            total_utoken: Uint128::from(1037345u128),
-            exchange_rate: Decimal::from_ratio(1037345u128, total_ustake.u128()),
+            total_utoken: Uint128::from(1037345u128 - 95197u128),
+            exchange_rate: Decimal::from_ratio(1037345u128 - 95197u128, total_ustake.u128()),
             unlocked_coins: vec![],
             unbonding: Uint128::from(95197u128),
             available: Uint128::zero(),
-            tvl_utoken: Uint128::from(95197u128 + 1037345u128),
+            tvl_utoken: Uint128::from(1037345u128),
         },
     );
 }
@@ -799,7 +825,7 @@ fn reconciling() {
     });
 
     assert_eq!(res.messages.len(), 2);
-    assert_eq!(res.messages[0].msg, stake.claim_unbonded_msg().unwrap());
+    assert_eq!(res.messages[0].msg, stake.dao_interface.claim_unbonded_msg().unwrap());
     assert_eq!(
         res.messages[1],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -1547,7 +1573,7 @@ fn vote() {
     .unwrap();
     assert_eq!(res.messages.len(), 1);
 
-    assert_eq!(res.messages[0].msg, stake.vote_msg(3, VoteOption::Yes).unwrap());
+    assert_eq!(res.messages[0].msg, stake.dao_interface.vote_msg(3, VoteOption::Yes).unwrap());
 }
 
 //--------------------------------------------------------------------------------------------------

@@ -6,6 +6,7 @@ use cosmwasm_std::{
     VoteOption,
 };
 use cw2::{get_contract_version, set_contract_version};
+use eris::adapters::hub::Hub;
 use eris::CustomResponse;
 use eris_chain_adapter::types::CustomMsgType;
 
@@ -83,8 +84,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> E
     match msg {
         ExecuteMsg::InitProp {
             proposal_id,
-            end_time_s,
-        } => init_prop(deps, env, info, proposal_id, end_time_s),
+        } => init_prop(deps, env, info, proposal_id),
         ExecuteMsg::Vote {
             proposal_id,
             vote,
@@ -149,16 +149,9 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> E
     }
 }
 
-fn init_prop(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    proposal_id: u64,
-    end_time_s: u64,
-) -> ExecuteResult {
+fn init_prop(deps: DepsMut, env: Env, _info: MessageInfo, proposal_id: u64) -> ExecuteResult {
     let state = State::default();
     let config = state.config.load(deps.storage)?;
-    config.assert_owner(&info.sender)?;
 
     let prop = state.props.may_load(deps.storage, proposal_id)?;
 
@@ -167,6 +160,10 @@ fn init_prop(
             StdError::generic_err(format!("prop {0} already initialized.", proposal_id)).into()
         );
     }
+
+    let hub_config = Hub(config.hub_addr.clone()).query_config(&deps.querier)?;
+    let proposal = hub_config.dao_interface.query_proposal(&deps.querier, proposal_id)?;
+    let end_time_s = proposal.end_time_s;
 
     if end_time_s < env.block.time.seconds() {
         return Err(StdError::generic_err("End time can't be in the past.").into());
@@ -185,7 +182,7 @@ fn init_prop(
                 config.escrow_addr,
                 period,
             )?,
-            current_vote: None,
+            current_vote: VoteOption::Abstain,
             no_vp: Uint128::zero(),
             abstain_vp: Uint128::zero(),
             yes_vp: Uint128::zero(),
@@ -193,7 +190,10 @@ fn init_prop(
         },
     )?;
 
+    let default_vote_msg = Hub(config.hub_addr).vote_msg(proposal_id, VoteOption::Abstain)?;
+
     Ok(Response::new()
+        .add_message(default_vote_msg)
         .add_attribute("action", "prop/init_prop")
         .add_attribute("prop", proposal_id.to_string())
         .add_attribute("end", period.to_string()))

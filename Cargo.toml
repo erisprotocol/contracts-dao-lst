@@ -2,10 +2,12 @@
 members = [
     "contracts/amp-governance/*",
     "contracts/dao-lst",
-    "contracts/dao-lst-factory",
+    "contracts/lst-factory",
     "packages/*",
 ]
-
+# Needs to be excluded for release builds
+# Also look in .carg/config to enable git-fetch-with-cli
+exclude = ["packages/eris-tests"]
 
 [profile.release.package.eris]
 opt-level = 3

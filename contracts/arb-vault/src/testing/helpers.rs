@@ -6,8 +6,7 @@ use cosmwasm_std::{
     ReplyOn, SubMsg, SystemError, SystemResult, Timestamp,
 };
 use eris_chain_adapter::types::{
-    chain, CoinType, CustomMsgType, DenomType, HubChainConfig, MultiSwapRouterType, StageType,
-    WithdrawType,
+    chain, CoinType, CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType,
 };
 use eris_chain_shared::chain_trait::ChainInterface;
 use serde::de::DeserializeOwned;

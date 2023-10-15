@@ -1,12 +1,13 @@
 use astroport::asset::AssetInfo;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    coin, to_binary, CosmosMsg, Empty, Env, StdError, StdResult, Uint128, VoteOption, WasmMsg,
+    coin, to_binary, Addr, CosmosMsg, Empty, Env, QuerierWrapper, StdError, StdResult, Uint128,
+    VoteOption, WasmMsg,
 };
-use cw20::Cw20ExecuteMsg;
+use cw20::{Cw20ExecuteMsg, Expiration};
 use eris_chain_adapter::types::CustomMsgType;
 
-use crate::hub::{DaoInterface, StakeToken};
+use crate::hub::DaoInterface;
 
 #[cw_serde]
 pub enum EnterpriseCw20HookMsg {
@@ -59,12 +60,12 @@ pub struct EnterpriseUnstakeCw20Msg {
 }
 
 #[cw_serde]
-pub enum ExecuteMsg {
-    ClaimRewards(ClaimRewardsMsg),
+pub enum EnterpriseDistributorExecuteMsg {
+    ClaimRewards(EnterpriseClaimRewardsMsg),
 }
 
 #[cw_serde]
-pub struct ClaimRewardsMsg {
+pub struct EnterpriseClaimRewardsMsg {
     pub user: String,
     /// Native denominations to be claimed
     pub native_denoms: Option<Vec<String>>,
@@ -72,12 +73,96 @@ pub struct ClaimRewardsMsg {
     pub cw20_assets: Option<Vec<String>>,
 }
 
-impl StakeToken {
-    pub fn deposit_msg(&self, amount: Uint128) -> StdResult<CosmosMsg<CustomMsgType>> {
-        match &self.utoken {
+#[cw_serde]
+pub enum Cw4DistributorExecuteMsg {
+    ClaimRewards(Cw4ClaimRewardsMsg),
+}
+
+#[cw_serde]
+pub struct Cw4ClaimRewardsMsg {
+    pub user: String,
+    /// Native denominations to be claimed
+    pub native_denoms: Option<Vec<String>>,
+}
+
+#[cw_serde]
+pub enum Cw3QueryMsg {
+    Proposal {
+        proposal_id: u64,
+    },
+}
+
+#[cw_serde]
+pub struct Cw3ProposalResponse {
+    pub id: u64,
+    pub expires: Expiration,
+}
+
+// #[cw_serde]
+// pub enum EnterpriseQueryMsg {
+//     Poll(PollParams),
+// }
+
+// /// Unique identifier for a poll.
+// pub type PollId = u64;
+
+// #[cw_serde]
+// /// Params for querying a poll.
+// pub struct PollParams {
+//     /// ID of the poll to be queried.
+//     pub poll_id: PollId,
+// }
+
+// #[cw_serde]
+// /// Response model for querying a poll.
+// pub struct EnterprisePollResponse {
+//     /// The poll.
+//     pub poll: Poll,
+// }
+// #[cw_serde]
+// /// A poll.
+// pub struct Poll {
+//     /// Unique identifier for the poll.
+//     pub id: PollId,
+//     /// End-time of poll.
+//     pub ends_at: Timestamp,
+// }
+
+pub struct ProposalResponse {
+    pub end_time_s: u64,
+}
+
+#[cw_serde]
+pub enum EnterpriseQueryMsg {
+    Proposal(ProposalParams),
+}
+
+#[cw_serde]
+pub struct ProposalParams {
+    pub proposal_id: u64,
+}
+
+#[cw_serde]
+pub struct EnterpriseProposalResponse {
+    pub proposal: Proposal,
+}
+
+#[cw_serde]
+pub struct Proposal {
+    pub id: u64,
+    pub expires: Expiration,
+}
+
+impl DaoInterface<Addr> {
+    pub fn deposit_msg(
+        &self,
+        utoken: &AssetInfo,
+        amount: Uint128,
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
+        match utoken {
             AssetInfo::Token {
                 contract_addr,
-            } => match &self.dao_interface {
+            } => match &self {
                 DaoInterface::Enterprise {
                     addr,
                     ..
@@ -91,7 +176,7 @@ impl StakeToken {
                     funds: vec![],
                 })),
 
-                DaoInterface::CW4 {
+                DaoInterface::Cw4 {
                     addr,
                     ..
                 } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -106,11 +191,11 @@ impl StakeToken {
             },
             AssetInfo::NativeToken {
                 denom,
-            } => match &self.dao_interface {
+            } => match &self {
                 DaoInterface::Enterprise {
                     ..
                 } => Err(StdError::generic_err("native_token not supported for enterprise")),
-                DaoInterface::CW4 {
+                DaoInterface::Cw4 {
                     addr,
                     ..
                 } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -123,7 +208,7 @@ impl StakeToken {
     }
 
     pub fn unbond_msg(&self, amount: Uint128) -> StdResult<CosmosMsg<CustomMsgType>> {
-        match &self.dao_interface {
+        match &self {
             DaoInterface::Enterprise {
                 addr,
                 ..
@@ -136,7 +221,7 @@ impl StakeToken {
                 )))?,
                 funds: vec![],
             })),
-            DaoInterface::CW4 {
+            DaoInterface::Cw4 {
                 addr,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -150,7 +235,7 @@ impl StakeToken {
     }
 
     pub fn claim_unbonded_msg(&self) -> StdResult<CosmosMsg<CustomMsgType>> {
-        match &self.dao_interface {
+        match &self {
             DaoInterface::Enterprise {
                 addr,
                 ..
@@ -159,7 +244,7 @@ impl StakeToken {
                 msg: to_binary(&EnterpriseExecuteMsg::Claim {})?,
                 funds: vec![],
             })),
-            DaoInterface::CW4 {
+            DaoInterface::Cw4 {
                 addr,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -176,28 +261,29 @@ impl StakeToken {
         native_denoms: Vec<String>,
         cw20_assets: Vec<String>,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
-        match &self.dao_interface {
+        match &self {
             DaoInterface::Enterprise {
                 fund_distributor,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
-                msg: to_binary(&ExecuteMsg::ClaimRewards(ClaimRewardsMsg {
-                    user: env.contract.address.to_string(),
-                    native_denoms: Some(native_denoms),
-                    cw20_assets: Some(cw20_assets),
-                }))?,
+                msg: to_binary(&EnterpriseDistributorExecuteMsg::ClaimRewards(
+                    EnterpriseClaimRewardsMsg {
+                        user: env.contract.address.to_string(),
+                        native_denoms: Some(native_denoms),
+                        cw20_assets: Some(cw20_assets),
+                    },
+                ))?,
                 funds: vec![],
             })),
-            DaoInterface::CW4 {
+            DaoInterface::Cw4 {
                 fund_distributor,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
-                msg: to_binary(&ExecuteMsg::ClaimRewards(ClaimRewardsMsg {
+                msg: to_binary(&Cw4DistributorExecuteMsg::ClaimRewards(Cw4ClaimRewardsMsg {
                     user: env.contract.address.to_string(),
                     native_denoms: None,
-                    cw20_assets: None,
                 }))?,
                 funds: vec![],
             })),
@@ -209,7 +295,7 @@ impl StakeToken {
         proposal_id: u64,
         outcome: VoteOption,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
-        match &self.dao_interface {
+        match &self {
             DaoInterface::Enterprise {
                 addr,
                 ..
@@ -226,7 +312,7 @@ impl StakeToken {
                 }))?,
                 funds: vec![],
             })),
-            DaoInterface::CW4 {
+            DaoInterface::Cw4 {
                 gov,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -242,6 +328,61 @@ impl StakeToken {
                 })?,
                 funds: vec![],
             })),
+        }
+    }
+
+    pub fn query_proposal(
+        &self,
+        querier: &QuerierWrapper,
+        proposal_id: u64,
+    ) -> StdResult<ProposalResponse> {
+        match self {
+            DaoInterface::Enterprise {
+                addr,
+                ..
+            } => {
+                let result: EnterpriseProposalResponse = querier.query_wasm_smart(
+                    addr,
+                    &EnterpriseQueryMsg::Proposal(ProposalParams {
+                        proposal_id,
+                    }),
+                )?;
+
+                Ok(ProposalResponse {
+                    end_time_s: match result.proposal.expires {
+                        Expiration::AtHeight(_) => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                        Expiration::AtTime(time) => Ok(time.seconds()),
+                        Expiration::Never {} => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                    }?,
+                })
+            },
+            DaoInterface::Cw4 {
+                gov,
+                ..
+            } => {
+                let result: Cw3ProposalResponse = querier.query_wasm_smart(
+                    gov,
+                    &Cw3QueryMsg::Proposal {
+                        proposal_id,
+                    },
+                )?;
+
+                Ok(ProposalResponse {
+                    end_time_s: match result.expires {
+                        Expiration::AtHeight(_) => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                        Expiration::AtTime(time) => Ok(time.seconds()),
+                        Expiration::Never {} => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                    }?,
+                })
+            },
         }
     }
 }

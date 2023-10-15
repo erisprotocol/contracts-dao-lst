@@ -124,7 +124,7 @@ pub(super) fn setup_test(
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
             operator: "operator".to_string(),
             vote_operator: None,
-            dao_interface: eris::hub::DaoInterface::CW4 {
+            dao_interface: eris::hub::DaoInterface::Cw4 {
                 addr: "cw4".to_string(),
                 gov: "gov".to_string(),
                 fund_distributor: "fund".to_string(),

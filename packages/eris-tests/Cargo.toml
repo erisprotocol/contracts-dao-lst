@@ -57,9 +57,6 @@ stader-reward = { git = "https://github.com/stader-labs/lunax.git", package = "r
 steak-hub = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak-hub-tf", default-features = false, rev = "425818764da1c6b87080b99f47ecebcccbc99dd8" }
 steak = { git = "https://github.com/PFC-developer/steak-contracts.git", package = "pfc-steak", default-features = false, rev = "425818764da1c6b87080b99f47ecebcccbc99dd8" }
 
-manta-stake = { git = "https://github.com/MantaDAO/manta-contracts.git", package = "cw4-stake" }
-manta-cw20 = { git = "https://github.com/MantaDAO/manta-contracts.git", package = "cw20" }
-manta-cw3 = { git = "https://github.com/MantaDAO/manta-contracts.git", package = "cw3-flex-multisig" }
 
 kujira = "0.7.13"
 osmosis-std = "0.15.3"
@@ -67,3 +64,8 @@ sei-cosmwasm = { version = "0.4.10" }
 sei-integration-tests = { version = "0.4.10" }
 
 anyhow = "1"
+
+# [dev-dependencies]
+manta-stake = { git = "https://github.com/MantaDAO/manta-contracts.git", package = "cw4-stake" }
+manta-cw20 = { git = "https://github.com/MantaDAO/manta-contracts.git", package = "cw20" }
+manta-cw3 = { git = "https://github.com/MantaDAO/manta-contracts.git", package = "cw3-flex-multisig" }

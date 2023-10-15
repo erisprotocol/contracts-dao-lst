@@ -52,10 +52,10 @@ pub enum DaoInterface<T> {
         addr: T,
         fund_distributor: T,
     },
-    CW4 {
-        // calling bond, unbond, claim /
+    Cw4 {
+        // calling bond, unbond, claim  (CW4)
         addr: T,
-        // calling vote
+        // calling vote (CW3)
         gov: T,
         // calling claimrewards
         fund_distributor: T,
@@ -72,11 +72,11 @@ impl DaoInterface<String> {
                 addr: api.addr_validate(addr)?,
                 fund_distributor: api.addr_validate(fund_distributor)?,
             },
-            DaoInterface::CW4 {
+            DaoInterface::Cw4 {
                 addr,
                 gov,
                 fund_distributor,
-            } => DaoInterface::CW4 {
+            } => DaoInterface::Cw4 {
                 addr: api.addr_validate(addr)?,
                 gov: api.addr_validate(gov)?,
                 fund_distributor: api.addr_validate(fund_distributor)?,
@@ -294,6 +294,9 @@ pub struct ConfigResponse {
 
     /// Update the vote_operator
     pub vote_operator: Option<String>,
+
+    /// address of the DAO
+    pub dao_interface: DaoInterface<Addr>,
 }
 
 #[cw_serde]

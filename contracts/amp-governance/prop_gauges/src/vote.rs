@@ -112,20 +112,9 @@ pub fn get_vote_msg(
 
     // if normal vote, check if the current vote is already set.
     let current_vote = prop.current_vote.clone();
-    let mut wanted = prop.get_wanted_vote(total_vp, config.quorum_bps)?;
+    let wanted = prop.get_wanted_vote(total_vp, config.quorum_bps)?;
     let vote_msg: Option<CosmosMsg<CustomMsgType>> = if wanted != current_vote {
-        if let Some(wanted) = &wanted {
-            Some(Hub(config.hub_addr.clone()).vote_msg(proposal_id, wanted.clone())?)
-        } else if current_vote.is_some()
-            && wanted.is_none()
-            && current_vote != Some(VoteOption::Abstain)
-        {
-            // if we already voted and go back to "not voting", vote abstain instead.
-            wanted = Some(VoteOption::Abstain);
-            Some(Hub(config.hub_addr.clone()).vote_msg(proposal_id, VoteOption::Abstain)?)
-        } else {
-            None
-        }
+        Some(Hub(config.hub_addr.clone()).vote_msg(proposal_id, wanted.clone())?)
     } else {
         None
     };

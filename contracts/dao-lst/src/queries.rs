@@ -34,6 +34,7 @@ pub fn config(deps: Deps<CustomQueryType>) -> StdResult<ConfigResponse> {
         withdrawals_preset: state.withdrawals_preset.may_load(deps.storage)?.unwrap_or_default(),
         allow_donations: state.allow_donations.may_load(deps.storage)?.unwrap_or(false),
         vote_operator: state.vote_operator.may_load(deps.storage)?.map(|addr| addr.into()),
+        dao_interface: stake.dao_interface,
     })
 }
 

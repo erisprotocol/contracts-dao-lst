@@ -69,7 +69,10 @@ fn harvesting_with_balance() {
     .unwrap();
 
     assert_eq!(res.messages.len(), 4);
-    assert_eq!(res.messages[0].msg, stake.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap()
+    );
 
     assert_eq!(
         res.messages[1],

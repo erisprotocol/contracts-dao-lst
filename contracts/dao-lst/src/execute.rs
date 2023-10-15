@@ -156,7 +156,7 @@ pub fn bond(
     state.stake_token.save(deps.storage, &stake)?;
 
     Ok(Response::new()
-        .add_message(stake.deposit_msg(token_to_bond)?)
+        .add_message(stake.dao_interface.deposit_msg(&stake.utoken, token_to_bond)?)
         .add_optional_messages(mint_msgs)
         .add_event(event)
         .add_attribute("action", "erishub/bond"))
@@ -177,7 +177,7 @@ pub fn harvest(
     let stake = state.stake_token.load(deps.storage)?;
 
     // 1. Withdraw rewards
-    let claim_msg = stake.claim_rewards_msg(
+    let claim_msg = stake.dao_interface.claim_rewards_msg(
         &env,
         native_denoms.unwrap_or_default(),
         cw20_assets.unwrap_or_default(),
@@ -485,7 +485,7 @@ pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
                 .add_attribute("utoken_bonded", to_bond)
                 .add_attribute("utoken_protocol_fee", protocol_fee);
 
-            msgs.push(stake.deposit_msg(to_bond)?);
+            msgs.push(stake.dao_interface.deposit_msg(&stake.utoken, to_bond)?);
             true
         } else if asset.info == stake_token_denom_native {
             // if receiving ustake (staked utoken) -> burn
@@ -705,9 +705,10 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
         },
     )?;
 
-    let unbond_msg = stake.unbond_msg(utoken_to_unbond)?;
+    let unbond_msg = stake.dao_interface.unbond_msg(utoken_to_unbond)?;
 
     // apply burn to the stored total supply and save state
+    stake.total_utoken_bonded = stake.total_utoken_bonded.checked_sub(utoken_to_unbond)?;
     stake.total_supply = stake.total_supply.checked_sub(pending_batch.ustake_to_burn)?;
     state.stake_token.save(deps.storage, &stake)?;
 
@@ -769,7 +770,7 @@ pub fn reconcile(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
         .add_attribute("utoken_deducted", "0");
 
     Ok(Response::new()
-        .add_message(stake.claim_unbonded_msg()?)
+        .add_message(stake.dao_interface.claim_unbonded_msg()?)
         // validate that the amount received is the one expected - otherwise dont allow reconciliation
         .add_optional_message(assert_received_amount_msg(
             &deps,

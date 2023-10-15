@@ -238,7 +238,7 @@ impl BaseErisTestPackage {
                         threshold: Decimal::from_str("0.5").unwrap(),
                         quorum: Decimal::from_str("0.3").unwrap(),
                     },
-                    max_voting_period: Duration::Time(259200),
+                    max_voting_period: Duration::Time(259200_000),
                     executor: None,
                     proposal_deposit: None,
                 },
@@ -315,7 +315,7 @@ impl BaseErisTestPackage {
             protocol_fee_contract: "fee".to_string(),
             protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
             vote_operator: None,
-            dao_interface: eris::hub::DaoInterface::CW4 {
+            dao_interface: eris::hub::DaoInterface::Cw4 {
                 addr: cw4_instance.to_string(),
                 gov: cw3_instance.to_string(),
                 fund_distributor: fund_instance.to_string(),

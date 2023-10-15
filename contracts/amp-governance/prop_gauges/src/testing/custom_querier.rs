@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 use std::ops::Mul;
 
+use astroport::asset::native_asset_info;
 use cosmwasm_schema::serde::Serialize;
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
-    SystemError, Uint128, WasmQuery,
+    from_binary, from_slice, to_binary, Addr, Coin, Decimal, Empty, Querier, QuerierResult,
+    QueryRequest, SystemError, Timestamp, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
+use eris::adapters::dao::{Cw3ProposalResponse, EnterpriseProposalResponse};
 use eris::voting_escrow::{LockInfoResponse, VotingPowerResponse};
 
 use super::cw20_querier::Cw20Querier;
@@ -20,6 +22,7 @@ pub(super) struct CustomQuerier {
     pub staking_querier: StakingQuerier,
 
     pub vp: HashMap<String, LockInfoResponse>,
+    pub prop_map: HashMap<u64, u64>,
 }
 
 impl Querier for CustomQuerier {
@@ -78,20 +81,9 @@ impl CustomQuerier {
         );
     }
 
-    // pub fn set_staking_delegations(&mut self, delegations: &[Delegation]) {
-    //     let fds = delegations
-    //         .iter()
-    //         .map(|d| FullDelegation {
-    //             delegator: Addr::unchecked(MOCK_CONTRACT_ADDR),
-    //             validator: d.validator.clone(),
-    //             amount: Coin::new(d.amount, "uluna"),
-    //             can_redelegate: Coin::new(0, "uluna"),
-    //             accumulated_rewards: vec![],
-    //         })
-    //         .collect::<Vec<_>>();
-
-    //     self.staking_querier = StakingQuerier::new("uluna", &[], &fds);
-    // }
+    pub fn set_prop_expiry(&mut self, proposal: u64, end_time_s: u64) {
+        self.prop_map.insert(proposal, end_time_s);
+    }
 
     pub fn handle_query(&self, request: &QueryRequest<Empty>) -> QuerierResult {
         match request {
@@ -103,8 +95,66 @@ impl CustomQuerier {
                     return self.cw20_querier.handle_query(contract_addr, query);
                 }
 
+                if let Ok(eris::hub::QueryMsg::Config {}) = from_binary::<eris::hub::QueryMsg>(msg)
+                {
+                    return self.to_result(eris::hub::ConfigResponse {
+                        owner: "owner".to_string(),
+                        new_owner: None,
+                        stake_token: "factory/abc/ampXXX".to_string(),
+                        epoch_period: 259200,
+                        unbond_period: 1814400,
+                        fee_config: eris::hub::FeeConfig {
+                            protocol_fee_contract: Addr::unchecked("fee"),
+                            protocol_reward_fee: Decimal::from_ratio(1u128, 100u128),
+                        },
+                        operator: "operator".to_string(),
+                        stages_preset: vec![],
+                        withdrawals_preset: vec![],
+                        allow_donations: false,
+                        vote_operator: None,
+                        utoken: native_asset_info("utoken".to_string()),
+                        dao_interface: eris::hub::DaoInterface::Cw4 {
+                            addr: Addr::unchecked("cw4"),
+                            gov: Addr::unchecked("gov"),
+                            fund_distributor: Addr::unchecked("fund"),
+                        },
+                    });
+                }
+
                 if let Ok(query) = from_binary::<eris::voting_escrow::QueryMsg>(msg) {
                     return self.handle_vp_query(contract_addr, query);
+                }
+
+                if let Ok(query) = from_binary::<eris::adapters::dao::Cw3QueryMsg>(msg) {
+                    return match query {
+                        eris::adapters::dao::Cw3QueryMsg::Proposal {
+                            proposal_id,
+                        } => match self.prop_map.get(&proposal_id) {
+                            Some(val) => self.to_result(Cw3ProposalResponse {
+                                id: proposal_id,
+                                expires: cw20::Expiration::AtTime(Timestamp::from_seconds(*val)),
+                            }),
+                            None => err_unsupported_query(msg),
+                        },
+                    };
+                }
+
+                if let Ok(query) = from_binary::<eris::adapters::dao::EnterpriseQueryMsg>(msg) {
+                    return match query {
+                        eris::adapters::dao::EnterpriseQueryMsg::Proposal(params) => {
+                            match self.prop_map.get(&params.proposal_id) {
+                                Some(val) => self.to_result(EnterpriseProposalResponse {
+                                    proposal: eris::adapters::dao::Proposal {
+                                        id: params.proposal_id,
+                                        expires: cw20::Expiration::AtTime(Timestamp::from_seconds(
+                                            *val,
+                                        )),
+                                    },
+                                }),
+                                None => err_unsupported_query(msg),
+                            }
+                        },
+                    };
                 }
 
                 err_unsupported_query(msg)

@@ -1,7 +1,5 @@
 pub mod adapters;
 pub mod arb_vault;
-pub mod astroport_farm;
-pub mod compound_proxy;
 pub mod constants;
 pub mod fees_collector;
 pub mod governance_helper;

@@ -83,51 +83,51 @@ fn proper_instantiation() {
 fn check_init_prop() {
     let mut deps = setup_test();
 
-    let res = execute(
-        deps.as_mut(),
-        mock_env(),
-        mock_info("nobody", &[]),
-        ExecuteMsg::InitProp {
-            proposal_id: 1,
-            end_time_s: EPOCH_START + WEEK * 10,
-        },
-    )
-    .unwrap_err();
-
-    assert_eq!(res.to_string(), "Generic error: unauthorized");
-
+    deps.querier.set_prop_expiry(1, EPOCH_START - WEEK * 10);
     let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 1,
-            end_time_s: EPOCH_START - WEEK * 10,
         },
     )
     .unwrap_err();
     assert_eq!(res.to_string(), "Generic error: Invalid time");
 
+    deps.querier.set_prop_expiry(1, EPOCH_START + WEEK * 10);
     let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 1,
-            end_time_s: EPOCH_START + WEEK * 10,
         },
     )
     .unwrap();
 
-    assert_eq!(res.messages.len(), 0);
+    assert_eq!(res.messages.len(), 1);
 
+    assert_eq!(
+        res.messages[0],
+        SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr: "hub".to_string(),
+            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+                proposal_id: 1,
+                vote: cosmwasm_std::VoteOption::Abstain
+            })
+            .unwrap(),
+            funds: vec![]
+        }))
+    );
+
+    deps.querier.set_prop_expiry(1, EPOCH_START + WEEK * 10);
     let res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 1,
-            end_time_s: EPOCH_START + WEEK * 10,
         },
     )
     .unwrap_err();
@@ -151,7 +151,7 @@ fn check_init_prop() {
                     no_vp: Uint128::zero(),
                     nwv_vp: Uint128::zero(),
                     yes_vp: Uint128::zero(),
-                    current_vote: None,
+                    current_vote: VoteOption::Abstain,
                     end_time_s: EPOCH_START + WEEK * 10,
                     period: get_period(EPOCH_START + WEEK * 10).unwrap(),
                     total_vp: Uint128::zero()
@@ -178,7 +178,7 @@ fn check_init_prop() {
                     no_vp: Uint128::zero(),
                     nwv_vp: Uint128::zero(),
                     yes_vp: Uint128::zero(),
-                    current_vote: None,
+                    current_vote: VoteOption::Abstain,
                     end_time_s: EPOCH_START + WEEK * 10,
                     period: get_period(EPOCH_START + WEEK * 10).unwrap(),
                     total_vp: Uint128::zero()
@@ -202,13 +202,13 @@ fn check_init_prop() {
         }
     );
 
+    deps.querier.set_prop_expiry(2, EPOCH_START + WEEK * 11);
     let _res = execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 2,
-            end_time_s: EPOCH_START + WEEK * 11,
         },
     )
     .unwrap();
@@ -232,7 +232,7 @@ fn check_init_prop() {
                         no_vp: Uint128::zero(),
                         nwv_vp: Uint128::zero(),
                         yes_vp: Uint128::zero(),
-                        current_vote: None,
+                        current_vote: VoteOption::Abstain,
                         end_time_s: EPOCH_START + WEEK * 10,
                         period: get_period(EPOCH_START + WEEK * 10).unwrap(),
                         total_vp: Uint128::zero()
@@ -245,7 +245,7 @@ fn check_init_prop() {
                         no_vp: Uint128::zero(),
                         nwv_vp: Uint128::zero(),
                         yes_vp: Uint128::zero(),
-                        current_vote: None,
+                        current_vote: VoteOption::Abstain,
                         end_time_s: EPOCH_START + WEEK * 11,
                         period: get_period(EPOCH_START + WEEK * 11).unwrap(),
                         total_vp: Uint128::zero()
@@ -322,7 +322,7 @@ fn vote_prop() {
                     no_vp: Uint128::new(198),
                     nwv_vp: Uint128::zero(),
                     yes_vp: Uint128::new(7),
-                    current_vote: Some(cosmwasm_std::VoteOption::No),
+                    current_vote: cosmwasm_std::VoteOption::No,
                     end_time_s: EPOCH_START + WEEK * 3,
                     period: get_period(EPOCH_START + WEEK * 3).unwrap(),
                     total_vp: Uint128::new(204)
@@ -375,7 +375,7 @@ fn vote_prop() {
                     no_vp: Uint128::zero(),
                     nwv_vp: Uint128::zero(),
                     yes_vp: Uint128::new(198 + 7),
-                    current_vote: Some(cosmwasm_std::VoteOption::Yes),
+                    current_vote: cosmwasm_std::VoteOption::Yes,
                     end_time_s: EPOCH_START + WEEK * 3,
                     period: get_period(EPOCH_START + WEEK * 3).unwrap(),
                     total_vp: Uint128::new(204)
@@ -448,7 +448,7 @@ fn remove_user() {
                 no_vp: Uint128::new(198),
                 nwv_vp: Uint128::zero(),
                 yes_vp: Uint128::new(7),
-                current_vote: Some(cosmwasm_std::VoteOption::No),
+                current_vote: cosmwasm_std::VoteOption::No,
                 end_time_s: EPOCH_START + WEEK * 3,
                 period: get_period(EPOCH_START + WEEK * 3).unwrap(),
                 total_vp: Uint128::new(204)
@@ -495,7 +495,7 @@ fn remove_user() {
                 no_vp: Uint128::new(198),
                 nwv_vp: Uint128::zero(),
                 yes_vp: Uint128::zero(),
-                current_vote: Some(cosmwasm_std::VoteOption::No),
+                current_vote: cosmwasm_std::VoteOption::No,
                 end_time_s: EPOCH_START + WEEK * 3,
                 period: get_period(EPOCH_START + WEEK * 3).unwrap(),
                 total_vp: Uint128::new(204)
@@ -555,7 +555,7 @@ fn remove_user() {
                 no_vp: Uint128::zero(),
                 nwv_vp: Uint128::zero(),
                 yes_vp: Uint128::zero(),
-                current_vote: Some(cosmwasm_std::VoteOption::Abstain),
+                current_vote: cosmwasm_std::VoteOption::Abstain,
                 end_time_s: EPOCH_START + WEEK * 3,
                 period: get_period(EPOCH_START + WEEK * 3).unwrap(),
                 total_vp: Uint128::new(204)
@@ -802,13 +802,13 @@ fn test_query_active_props() {
     let mut deps = setup_test();
 
     for n in 1..101 {
+        deps.querier.set_prop_expiry(n, EPOCH_START + WEEK * n);
         execute(
             deps.as_mut(),
             mock_env(),
             mock_info("owner", &[]),
             ExecuteMsg::InitProp {
                 proposal_id: n,
-                end_time_s: EPOCH_START + WEEK * n,
             },
         )
         .unwrap();
@@ -840,13 +840,13 @@ fn test_query_finished_props() {
     let mut deps = setup_test();
 
     for n in 1..101 {
+        deps.querier.set_prop_expiry(n, EPOCH_START + WEEK * n);
         execute(
             deps.as_mut(),
             mock_env(),
             mock_info("owner", &[]),
             ExecuteMsg::InitProp {
                 proposal_id: n,
-                end_time_s: EPOCH_START + WEEK * n,
             },
         )
         .unwrap();
@@ -1059,35 +1059,35 @@ fn update_config() {
 fn setup_props(
     mut deps: OwnedDeps<MockStorage, MockApi, CustomQuerier>,
 ) -> OwnedDeps<MockStorage, MockApi, CustomQuerier> {
+    deps.querier.set_prop_expiry(1, EPOCH_START + WEEK);
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 1,
-            end_time_s: EPOCH_START + WEEK,
         },
     )
     .unwrap();
 
+    deps.querier.set_prop_expiry(2, EPOCH_START + WEEK * 2);
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 2,
-            end_time_s: EPOCH_START + WEEK * 2,
         },
     )
     .unwrap();
 
+    deps.querier.set_prop_expiry(3, EPOCH_START + WEEK * 3);
     execute(
         deps.as_mut(),
         mock_env(),
         mock_info("owner", &[]),
         ExecuteMsg::InitProp {
             proposal_id: 3,
-            end_time_s: EPOCH_START + WEEK * 3,
         },
     )
     .unwrap();

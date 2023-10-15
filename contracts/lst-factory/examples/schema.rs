@@ -1,5 +1,5 @@
 use cosmwasm_schema::write_api;
-use eris_dao_lst_factory::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use eris_lst_factory::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 fn main() {
     write_api! {

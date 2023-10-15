@@ -16,7 +16,7 @@ pub fn vote(
 
     let event = Event::new("erishub/voted").add_attribute("prop", proposal_id.to_string());
 
-    let vote = stake.vote_msg(proposal_id, vote)?;
+    let vote = stake.dao_interface.vote_msg(proposal_id, vote)?;
 
     Ok(Response::new().add_message(vote).add_event(event).add_attribute("action", "erishub/vote"))
 }

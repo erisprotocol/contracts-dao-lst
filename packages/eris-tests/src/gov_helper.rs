@@ -399,13 +399,13 @@ impl EscrowHelper {
         amount: u128,
         sender: String,
     ) -> Result<AppResponse> {
-        self.mint_token(router_ref, "utoken".to_string(), sender.clone(), amount);
+        self.mint_utoken(router_ref, sender.clone(), amount);
 
         router_ref.execute_contract(
             Addr::unchecked(sender),
             self.base.cw4.get_address(),
             &manta_stake::msg::ExecuteMsg::Bond {},
-            &[coin(amount, "utoken")],
+            &[coin(amount, self.base.utoken_denom())],
         )
     }
 

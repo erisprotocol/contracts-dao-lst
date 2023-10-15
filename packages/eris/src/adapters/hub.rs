@@ -1,8 +1,10 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{coin, to_binary, Addr, CosmosMsg, StdResult, VoteOption, WasmMsg};
+use cosmwasm_std::{
+    coin, to_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, VoteOption, WasmMsg,
+};
 use eris_chain_adapter::types::CustomMsgType;
 
-use crate::hub::ExecuteMsg;
+use crate::hub::{ConfigResponse, ExecuteMsg, QueryMsg};
 
 #[cw_serde]
 pub struct Hub(pub Addr);
@@ -37,5 +39,11 @@ impl Hub {
             })?,
             funds: vec![],
         }))
+    }
+
+    pub fn query_config(&self, querier: &QuerierWrapper) -> StdResult<ConfigResponse> {
+        let config: ConfigResponse =
+            querier.query_wasm_smart(self.0.to_string(), &QueryMsg::Config {})?;
+        Ok(config)
     }
 }
