@@ -1,33 +1,38 @@
 use astroport::asset::AssetInfo;
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     coin, to_binary, Addr, CosmosMsg, Empty, Env, QuerierWrapper, StdError, StdResult, Uint128,
     VoteOption, WasmMsg,
 };
 use cw20::{Cw20ExecuteMsg, Expiration};
 use eris_chain_adapter::types::CustomMsgType;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::hub::DaoInterface;
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum EnterpriseCw20HookMsg {
     Stake {},
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum EnterpriseExecuteMsg {
     CastVote(CastVoteMsg),
     Unstake(EnterpriseUnstakeMsg),
     Claim {},
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct CastVoteMsg {
     pub proposal_id: u64,
     pub outcome: VoteOutcome,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 #[repr(u8)]
 // TODO: rename to VoteOption?
 pub enum VoteOutcome {
@@ -49,22 +54,26 @@ impl From<u8> for VoteOutcome {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum EnterpriseUnstakeMsg {
     Cw20(EnterpriseUnstakeCw20Msg),
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct EnterpriseUnstakeCw20Msg {
     pub amount: Uint128,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum EnterpriseDistributorExecuteMsg {
     ClaimRewards(EnterpriseClaimRewardsMsg),
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct EnterpriseClaimRewardsMsg {
     pub user: String,
     /// Native denominations to be claimed
@@ -73,26 +82,30 @@ pub struct EnterpriseClaimRewardsMsg {
     pub cw20_assets: Option<Vec<String>>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum Cw4DistributorExecuteMsg {
     ClaimRewards(Cw4ClaimRewardsMsg),
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct Cw4ClaimRewardsMsg {
     pub user: String,
     /// Native denominations to be claimed
     pub native_denoms: Option<Vec<String>>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum Cw3QueryMsg {
     Proposal {
         proposal_id: u64,
     },
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct Cw3ProposalResponse {
     pub id: u64,
     pub expires: Expiration,
@@ -128,26 +141,32 @@ pub struct Cw3ProposalResponse {
 //     pub ends_at: Timestamp,
 // }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct ProposalResponse {
     pub end_time_s: u64,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum EnterpriseQueryMsg {
     Proposal(ProposalParams),
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct ProposalParams {
     pub proposal_id: u64,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct EnterpriseProposalResponse {
     pub proposal: Proposal,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct Proposal {
     pub id: u64,
     pub expires: Expiration,

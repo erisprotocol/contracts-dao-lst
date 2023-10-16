@@ -56,7 +56,6 @@ pub fn state(deps: Deps<CustomQueryType>, env: Env) -> StdResult<StateResponse> 
             let (_, v) = item.unwrap();
             v
         })
-        .filter(|item| item.est_unbond_end_time > env.block.time.seconds())
         .map(|item| item.utoken_unclaimed.u128())
         .sum();
 
