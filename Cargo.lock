@@ -3,6 +3,21 @@
 version = 3
 
 [[package]]
+name = "alliance-protocol"
+version = "0.1.0"
+source = "git+https://github.com/terra-money/alliance-protocol?rev=e39d9648a5560a981b59ec9eacd8bc453d1500cb#e39d9648a5560a981b59ec9eacd8bc453d1500cb"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cosmwasm-storage",
+ "cw-asset 2.4.0",
+ "cw-storage-plus 0.16.0",
+ "schemars",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -413,6 +428,19 @@ dependencies = [
 
 [[package]]
 name = "cw-asset"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28e955303c96778b58ad52bbbabbe10b170ae1c8df2fec08ce7d7eedf2c22701"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
+ "cw1155",
+ "cw20 0.16.0",
+]
+
+[[package]]
+name = "cw-asset"
 version = "3.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "64e2cf17accdcafe71859a683b6ed3f18311634a769550aacf4829b50151b221"
@@ -539,6 +567,17 @@ dependencies = [
 
 [[package]]
 name = "cw-storage-plus"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9b6f91c0b94481a3e9ef1ceb183c37d00764f8751e39b45fc09f4d9b970d469"
+dependencies = [
+ "cosmwasm-std",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw-storage-plus"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "053a5083c258acd68386734f428a5a171b29f7d733151ae83090c6fcc9417ffa"
@@ -591,6 +630,21 @@ dependencies = [
 
 [[package]]
 name = "cw-utils"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d6a84c6c1c0acc3616398eba50783934bd6c964bad6974241eaee3460c8f5b26"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw2 0.16.0",
+ "schemars",
+ "semver",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "cw-utils"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c80e93d1deccb8588db03945016a292c3c631e6325d349ebb35d2db6f4f946f7"
@@ -632,6 +686,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cw1155"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4be0ebb4d95abc0e3f8ea00fbcf10afec5416b0aa1122c703de69850296897c5"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.16.0",
+ "schemars",
+ "serde",
+]
+
+[[package]]
 name = "cw2"
 version = "0.13.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -664,6 +731,19 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-storage-plus 0.15.1",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw2"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91398113b806f4d2a8d5f8d05684704a20ffd5968bf87e3473e1973710b884ad"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.16.0",
  "schemars",
  "serde",
 ]
@@ -703,6 +783,19 @@ dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
  "cw-utils 0.15.1",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "cw20"
+version = "0.16.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a45a8794a5dd33b66af34caee52a7beceb690856adcc1682b6e3db88b2cdee62"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-utils 0.16.0",
  "schemars",
  "serde",
 ]
@@ -911,9 +1004,11 @@ dependencies = [
 name = "eris"
 version = "1.6.0"
 dependencies = [
+ "alliance-protocol",
  "astroport 2.8.0",
  "cosmwasm-schema",
  "cosmwasm-std",
+ "cw-asset 2.4.0",
  "cw20 1.1.0",
  "cw20-base 1.1.0",
  "cw3",
@@ -934,6 +1029,27 @@ dependencies = [
  "eris-chain-adapter 1.2.2 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "eris-alliance-hub-lst-terra"
+version = "1.0.0"
+dependencies = [
+ "alliance-protocol",
+ "astroport 2.8.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-storage-plus 0.15.1",
+ "cw2 1.1.0",
+ "cw20 1.1.0",
+ "eris 1.6.0",
+ "eris-chain-adapter 1.2.2",
+ "eris-chain-shared 1.2.2",
+ "itertools",
+ "kujira",
+ "protobuf 3.2.0",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
@@ -991,7 +1107,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-dao-lst-kujira"
+name = "eris-dao-lst-terra"
 version = "1.0.0"
 dependencies = [
  "astroport 2.8.0",
@@ -1065,7 +1181,7 @@ source = "git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-asset",
+ "cw-asset 3.0.0",
  "cw20 0.13.4",
  "eris-chain-shared 1.2.2 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
  "osmosis-std-derive 0.13.2",
@@ -1153,7 +1269,7 @@ dependencies = [
  "astroport 2.8.0",
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-asset",
+ "cw-asset 3.0.0",
  "cw20 1.1.0",
  "eris-chain-shared 1.2.2",
  "osmosis-std-derive 0.13.2",
@@ -1170,7 +1286,7 @@ source = "git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cw-asset",
+ "cw-asset 3.0.0",
  "cw20 0.13.4",
  "eris-chain-shared 1.2.2 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
  "osmosis-std-derive 0.13.2",

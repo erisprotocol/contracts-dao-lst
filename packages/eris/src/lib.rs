@@ -6,12 +6,13 @@ pub mod governance_helper;
 pub mod helper;
 pub mod helpers;
 pub mod hub;
+pub mod hub_alliance;
 pub mod prop_gauges;
 pub mod querier;
 pub mod voting_escrow;
 
 mod extensions {
-    use crate::hub::CallbackMsg;
+    use crate::{hub::CallbackMsg, hub_alliance};
     use cosmwasm_std::{
         Attribute, Decimal, Decimal256, Env, Event, Fraction, OverflowError, Response, StdError,
         StdResult, Uint128, Uint256,
@@ -85,6 +86,22 @@ mod extensions {
             env: &Env,
             msg: Option<Vec<CallbackMsg>>,
         ) -> StdResult<Self>;
+
+        fn add_callback_alliance(
+            self,
+            env: &Env,
+            msg: hub_alliance::CallbackMsg,
+        ) -> StdResult<Self>;
+        fn add_optional_callback_alliance(
+            self,
+            env: &Env,
+            msg: Option<hub_alliance::CallbackMsg>,
+        ) -> StdResult<Self>;
+        fn add_optional_callbacks_alliance(
+            self,
+            env: &Env,
+            msg: Option<Vec<hub_alliance::CallbackMsg>>,
+        ) -> StdResult<Self>;
     }
 
     impl CustomResponse<CustomMsgType> for Response<CustomMsgType> {
@@ -124,6 +141,40 @@ mod extensions {
                 Some(msgs) => {
                     for msg in msgs {
                         self = self.add_callback(env, msg)?;
+                    }
+                    Ok(self)
+                },
+                None => Ok(self),
+            }
+        }
+
+        fn add_callback_alliance(
+            self,
+            env: &Env,
+            msg: hub_alliance::CallbackMsg,
+        ) -> StdResult<Self> {
+            Ok(self.add_message(msg.into_cosmos_msg(&env.contract.address)?))
+        }
+
+        fn add_optional_callback_alliance(
+            self,
+            env: &Env,
+            msg: Option<hub_alliance::CallbackMsg>,
+        ) -> StdResult<Self> {
+            match msg {
+                Some(msg) => self.add_callback_alliance(env, msg),
+                None => Ok(self),
+            }
+        }
+        fn add_optional_callbacks_alliance(
+            mut self,
+            env: &Env,
+            msg: Option<Vec<hub_alliance::CallbackMsg>>,
+        ) -> StdResult<Self> {
+            match msg {
+                Some(msgs) => {
+                    for msg in msgs {
+                        self = self.add_callback_alliance(env, msg)?;
                     }
                     Ok(self)
                 },

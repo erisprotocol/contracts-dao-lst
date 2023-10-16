@@ -15,7 +15,9 @@ cw4-stake = "1.1.0"
 cw3 = "1.1.0"
 cw20 = "1.1.0"
 cw20-base = { version = "1.1.0", features = ["library"] }
+cw-asset = "2.4.0"
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+alliance-protocol = { git = "https://github.com/terra-money/alliance-protocol", default-features = false, rev = "e39d9648a5560a981b59ec9eacd8bc453d1500cb" }

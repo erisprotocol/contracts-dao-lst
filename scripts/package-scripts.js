@@ -6,13 +6,16 @@ module.exports = {
       default: "bash build_release.sh",
     },
     schema: {
-      default: "nps schema.create schema.transform  schema.hub",
+      default: "nps schema.create schema.transform  schema.hub schema.alliance",
 
       transform: "ts-node transform.ts",
 
       create: "bash build_schema.sh",
 
       hub: "cd .. && json2ts -i contracts/dao-lst/**/*.json -o ../liquid-staking-scripts/types/dao-lst/hub",
+
+      alliance:
+        "cd .. && json2ts -i contracts/alliance-hub-lst/**/*.json -o ../liquid-staking-scripts/types/alliance-hub-lst",
 
       // ampz: "cd .. && json2ts -i contracts/ampz/schema/*.json -o ../liquid-staking-scripts/types/ampz",
       arb: "cd .. && json2ts -i contracts/arb-vault/schema/*.json -o ../liquid-staking-scripts/types/tokenfactory/arb-vault",

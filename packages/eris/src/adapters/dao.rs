@@ -188,6 +188,9 @@ impl DaoInterface<Addr> {
                     })?,
                     funds: vec![],
                 })),
+                DaoInterface::Alliance {
+                    ..
+                } => Err(StdError::generic_err("cw20 not supported for alliance")),
             },
             AssetInfo::NativeToken {
                 denom,
@@ -203,11 +206,22 @@ impl DaoInterface<Addr> {
                     msg: to_binary(&cw4_stake::msg::ExecuteMsg::Bond {})?,
                     funds: vec![coin(amount.u128(), denom)],
                 })),
+                DaoInterface::Alliance {
+                    addr,
+                } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: addr.to_string(),
+                    msg: to_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::Stake {})?,
+                    funds: vec![coin(amount.u128(), denom)],
+                })),
             },
         }
     }
 
-    pub fn unbond_msg(&self, amount: Uint128) -> StdResult<CosmosMsg<CustomMsgType>> {
+    pub fn unbond_msg(
+        &self,
+        utoken: &AssetInfo,
+        amount: Uint128,
+    ) -> StdResult<CosmosMsg<CustomMsgType>> {
         match &self {
             DaoInterface::Enterprise {
                 addr,
@@ -231,6 +245,15 @@ impl DaoInterface<Addr> {
                 })?,
                 funds: vec![],
             })),
+            DaoInterface::Alliance {
+                addr,
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: addr.to_string(),
+                msg: to_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::Unstake(
+                    to_cw_asset(utoken, amount)?,
+                ))?,
+                funds: vec![],
+            })),
         }
     }
 
@@ -252,12 +275,16 @@ impl DaoInterface<Addr> {
                 msg: to_binary(&cw4_stake::msg::ExecuteMsg::Claim {})?,
                 funds: vec![],
             })),
+            DaoInterface::Alliance {
+                ..
+            } => Err(StdError::generic_err("claiming not supported for alliance"))?,
         }
     }
 
     pub fn claim_rewards_msg(
         &self,
         env: &Env,
+        utoken: &AssetInfo,
         native_denoms: Vec<String>,
         cw20_assets: Vec<String>,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
@@ -285,6 +312,15 @@ impl DaoInterface<Addr> {
                     user: env.contract.address.to_string(),
                     native_denoms: None,
                 }))?,
+                funds: vec![],
+            })),
+            DaoInterface::Alliance {
+                addr,
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: addr.to_string(),
+                msg: to_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::ClaimRewards(
+                    cw_asset::AssetInfo::native(to_cw_asset_denom(utoken)?),
+                ))?,
                 funds: vec![],
             })),
         }
@@ -328,6 +364,9 @@ impl DaoInterface<Addr> {
                 })?,
                 funds: vec![],
             })),
+            DaoInterface::Alliance {
+                ..
+            } => Err(StdError::generic_err("voting not supported for alliance"))?,
         }
     }
 
@@ -383,6 +422,24 @@ impl DaoInterface<Addr> {
                     }?,
                 })
             },
+            DaoInterface::Alliance {
+                ..
+            } => Err(StdError::generic_err("proposal not supported for alliance"))?,
         }
     }
+}
+
+fn to_cw_asset(utoken: &AssetInfo, amount: Uint128) -> Result<cw_asset::AssetBase<Addr>, StdError> {
+    Ok(cw_asset::Asset::native(to_cw_asset_denom(utoken)?, amount))
+}
+
+fn to_cw_asset_denom(utoken: &AssetInfo) -> Result<String, StdError> {
+    Ok(match utoken {
+        AssetInfo::Token {
+            ..
+        } => Err(StdError::generic_err("cw20 not supported for alliance"))?,
+        AssetInfo::NativeToken {
+            denom,
+        } => denom.to_string(),
+    })
 }

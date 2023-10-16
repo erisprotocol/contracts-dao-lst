@@ -1,5 +1,5 @@
 [package]
-name = "eris-dao-lst-terra"
+name = "eris-alliance-hub-lst-terra"
 version = "1.0.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
@@ -33,4 +33,5 @@ thiserror = { version = "1.0" }
 protobuf = "3"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+alliance-protocol = { git = "https://github.com/terra-money/alliance-protocol", default-features = false, rev = "e39d9648a5560a981b59ec9eacd8bc453d1500cb" }
 kujira = "0.7.13"

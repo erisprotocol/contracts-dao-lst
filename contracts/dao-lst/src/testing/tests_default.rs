@@ -333,7 +333,7 @@ fn harvesting() {
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
         res.messages[0].msg,
-        stake.dao_interface.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap()
+        stake.dao_interface.claim_rewards_msg(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
     );
     assert_eq!(res.messages[1], check_received_coin(0, 0));
 
@@ -373,7 +373,7 @@ fn harvesting_with_balance() {
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
         res.messages[0].msg,
-        stake.dao_interface.claim_rewards_msg(&mock_env(), vec![], vec![]).unwrap()
+        stake.dao_interface.claim_rewards_msg(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
     );
     assert_eq!(res.messages[1], check_received_coin(1000, 100));
 
@@ -697,7 +697,10 @@ fn submitting_batch() {
 
     assert_eq!(res.messages.len(), 2);
 
-    assert_eq!(res.messages[0].msg, stake.dao_interface.unbond_msg(Uint128::new(95197)).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.unbond_msg(&stake.utoken, Uint128::new(95197)).unwrap()
+    );
 
     assert_eq!(
         res.messages[1].msg,
