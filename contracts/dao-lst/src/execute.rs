@@ -27,7 +27,7 @@ use crate::types::Assets;
 
 use eris_chain_shared::chain_trait::ChainInterface;
 
-const CONTRACT_NAME: &str = "eris-dao-lst-kujira";
+const CONTRACT_NAME: &str = "eris-dao-lst";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 //--------------------------------------------------------------------------------------------------
