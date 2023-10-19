@@ -6,7 +6,7 @@ use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
     adapters::whitewhaledex::WhiteWhalePair,
-    denom::{MsgBurn, MsgCreateDenom, MsgMint},
+    custom_execute_msg::CustomExecuteMsg,
     types::{CoinType, CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType},
 };
 
@@ -19,11 +19,17 @@ impl
     for Chain
 {
     fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
-        MsgCreateDenom {
-            sender: self.contract.to_string(),
-            subdenom,
-        }
-        .into()
+        // MsgCreateDenom {
+        //     sender: self.contract.to_string(),
+        //     subdenom,
+        // }
+        // .into()
+
+        CosmosMsg::Custom(CustomExecuteMsg::Token(
+            crate::custom_execute_msg::TokenExecuteMsg::CreateDenom {
+                subdenom,
+            },
+        ))
     }
 
     fn create_mint_msgs(
@@ -33,15 +39,22 @@ impl
         recipient: Addr,
     ) -> Vec<CosmosMsg<CustomMsgType>> {
         vec![
-            MsgMint {
-                sender: self.contract.to_string(),
-                amount: Some(crate::denom::Coin {
-                    denom: full_denom.to_string(),
-                    amount: amount.to_string(),
-                }),
-                mint_to_address: self.contract.to_string(),
-            }
-            .into(),
+            CosmosMsg::Custom(CustomExecuteMsg::Token(
+                crate::custom_execute_msg::TokenExecuteMsg::MintTokens {
+                    denom: full_denom.clone(),
+                    amount,
+                    mint_to_address: self.contract.to_string(),
+                },
+            )),
+            // MsgMint {
+            //     sender: self.contract.to_string(),
+            //     amount: Some(terra_proto_rs::cosmos::base::v1beta1::Coin {
+            //         denom: full_denom.to_string(),
+            //         amount: amount.to_string(),
+            //     }),
+            //     mint_to_address: self.contract.to_string(),
+            // }
+            // .into(),
             CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
                 to_address: recipient.to_string(),
                 amount: coins(amount.u128(), full_denom),
@@ -50,15 +63,23 @@ impl
     }
 
     fn create_burn_msg(&self, full_denom: String, amount: Uint128) -> CosmosMsg<CustomMsgType> {
-        MsgBurn {
-            sender: self.contract.to_string(),
-            amount: Some(crate::denom::Coin {
+        // MsgBurn {
+        //     sender: self.contract.to_string(),
+        //     amount: Some(terra_proto_rs::cosmos::base::v1beta1::Coin {
+        //         denom: full_denom,
+        //         amount: amount.to_string(),
+        //     }),
+        //     burn_from_address: self.contract.to_string(),
+        // }
+        // .into()
+
+        CosmosMsg::Custom(CustomExecuteMsg::Token(
+            crate::custom_execute_msg::TokenExecuteMsg::BurnTokens {
                 denom: full_denom,
-                amount: amount.to_string(),
-            }),
-            burn_from_address: self.contract.to_string(),
-        }
-        .into()
+                amount,
+                burn_from_address: self.contract.to_string(),
+            },
+        ))
     }
 
     fn create_withdraw_msg(

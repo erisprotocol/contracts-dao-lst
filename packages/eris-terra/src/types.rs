@@ -2,6 +2,8 @@ use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Coin, Empty, Uint128};
 
+use crate::custom_execute_msg::CustomExecuteMsg;
+
 #[cw_serde]
 pub enum WithdrawType {
     Dex {
@@ -57,7 +59,7 @@ impl StageType {
 
 pub type DenomType = AssetInfo;
 pub type CoinType = Asset;
-pub type CustomMsgType = Empty;
+pub type CustomMsgType = CustomExecuteMsg;
 pub type CustomQueryType = Empty;
 
 pub fn get_asset(info: DenomType, amount: Uint128) -> CoinType {
