@@ -88,6 +88,8 @@ pub struct MsgMint {
     pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
     pub amount: ::core::option::Option<Coin>,
+    #[prost(string, tag = "3")]
+    pub mint_to_address: ::prost::alloc::string::String,
 }
 #[derive(
     Clone,
@@ -119,6 +121,8 @@ pub struct MsgBurn {
     pub sender: ::prost::alloc::string::String,
     #[prost(message, optional, tag = "2")]
     pub amount: ::core::option::Option<Coin>,
+    #[prost(string, tag = "3")]
+    pub burn_from_address: ::prost::alloc::string::String,
 }
 #[derive(
     Clone,
