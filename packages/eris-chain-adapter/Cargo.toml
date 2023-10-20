@@ -26,4 +26,4 @@ X-osmosis-X = []
 X-sei-X = []
 X-terra-X = []
 
-default = ["X-terra-X"]
+default = ["X-kujira-X"]
