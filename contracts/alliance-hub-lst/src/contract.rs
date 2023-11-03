@@ -1,3 +1,4 @@
+use astroport::asset::AssetInfo;
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
 };
@@ -49,6 +50,69 @@ pub fn execute(
                 donate.unwrap_or(false),
             )
         },
+
+        ExecuteMsg::Unbond {
+            receiver,
+        } => {
+            let state = State::default();
+            let stake_token = state.stake_token.load(deps.storage)?;
+
+            if info.funds.len() != 1 {
+                return Err(ContractError::ExpectingSingleCoin {});
+            }
+
+            if info.funds[0].denom != stake_token.denom {
+                return Err(ContractError::ExpectingStakeToken(info.funds[0].denom.to_string()));
+            }
+
+            execute::unbond(
+                deps,
+                env,
+                info.sender.clone(),
+                api.addr_validate(&receiver.unwrap_or_else(|| info.sender.to_string()))?,
+                info.funds[0].amount,
+            )
+        },
+
+        ExecuteMsg::Swap {
+            offer_asset,
+            to,
+            ..
+        } => {
+            offer_asset.assert_sent_native_token_balance(&info)?;
+
+            let state = State::default();
+            let stake = state.stake_token.load(deps.storage)?;
+
+            if stake.utoken == offer_asset.info {
+                let token_to_bond = offer_asset.amount;
+                return execute::bond(
+                    deps,
+                    env,
+                    state,
+                    stake,
+                    token_to_bond,
+                    to.map(|s| api.addr_validate(&s)).transpose()?.unwrap_or(info.sender),
+                    false,
+                );
+            } else if let AssetInfo::NativeToken {
+                denom,
+            } = offer_asset.info
+            {
+                if denom == stake.denom {
+                    return execute::unbond(
+                        deps,
+                        env,
+                        info.sender.clone(),
+                        api.addr_validate(&to.unwrap_or_else(|| info.sender.to_string()))?,
+                        offer_asset.amount,
+                    );
+                }
+            }
+
+            Err(ContractError::ExpectingSupportedTokens {})
+        },
+
         ExecuteMsg::TransferOwnership {
             new_owner,
         } => execute::transfer_ownership(deps, info.sender, new_owner),
@@ -92,28 +156,6 @@ pub fn execute(
             allow_donations,
             default_max_spread,
         ),
-        ExecuteMsg::Unbond {
-            receiver,
-        } => {
-            let state = State::default();
-            let stake_token = state.stake_token.load(deps.storage)?;
-
-            if info.funds.len() != 1 {
-                return Err(ContractError::ExpectingSingleCoin {});
-            }
-
-            if info.funds[0].denom != stake_token.denom {
-                return Err(ContractError::ExpectingStakeToken(info.funds[0].denom.to_string()));
-            }
-
-            execute::unbond(
-                deps,
-                env,
-                info.sender.clone(),
-                api.addr_validate(&receiver.unwrap_or_else(|| info.sender.to_string()))?,
-                info.funds[0].amount,
-            )
-        },
     }
 }
 

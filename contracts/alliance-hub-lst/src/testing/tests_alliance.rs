@@ -1,4 +1,4 @@
-use astroport::asset::{native_asset_info, AssetInfoExt};
+use astroport::asset::{native_asset, native_asset_info, AssetInfoExt};
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
     coin, to_binary, Addr, Coin, CosmosMsg, Decimal, Event, StdError, StdResult, SubMsg, Uint128,
@@ -128,6 +128,170 @@ fn bond() {
         ExecuteMsg::Bond {
             receiver: Some("user_3".to_string()),
             donate: Some(false),
+        },
+    )
+    .unwrap();
+
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(12345),
+        Addr::unchecked("user_3"),
+    );
+    assert_eq!(res.messages.len(), 1 + mint_msgs.len());
+
+    let mut index = 0;
+    assert_eq!(
+        res.messages[index].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(12345)).unwrap()
+    );
+
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    deps.querier.set_bank_balances(&[coin(0, MOCK_UTOKEN)]);
+    let res: StateResponse = query_helper(deps.as_ref(), QueryMsg::State {});
+    assert_eq!(
+        res,
+        StateResponse {
+            total_ustake: Uint128::new(1012345),
+            total_utoken: Uint128::new(1012345),
+            exchange_rate: Decimal::from_ratio(1u128, 1u128),
+            unlocked_coins: vec![],
+            available: Uint128::new(0),
+            tvl_utoken: Uint128::new(1012345),
+        }
+    );
+}
+
+#[test]
+fn swap_bond() {
+    let (mut deps, stake) = setup_test();
+
+    deps.querier.set_bank_balances(&[coin(1000000, MOCK_UTOKEN)]);
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(MOCK_UTOKEN.to_string(), Uint128::new(1000001)),
+            belief_price: None,
+            max_spread: None,
+            to: None,
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Native token balance mismatch between the argument and the transferred"
+            .to_string()
+    );
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset("test".to_string(), Uint128::new(1000000)),
+            belief_price: None,
+            max_spread: None,
+            to: None,
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(err.to_string(), "Generic error: Must send reserve token 'test'".to_string());
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_1", &[Coin::new(1000000, "test")]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset("test".to_string(), Uint128::new(1000000)),
+            belief_price: None,
+            max_spread: None,
+            to: None,
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(err.to_string(), "Expecting one of the supported tokens".to_string());
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_1", &[]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset("test".to_string(), Uint128::new(1000000)),
+            belief_price: None,
+            max_spread: None,
+            to: None,
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(err.to_string(), "Generic error: No funds sent".to_string());
+
+    // Bond when no delegation has been made
+    // In this case, the full deposit simply goes to the first validator
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(MOCK_UTOKEN.to_string(), Uint128::new(1000000)),
+            belief_price: None,
+            max_spread: None,
+            to: None,
+        },
+    )
+    .unwrap();
+
+    let mint_msgs = chain_test().create_mint_msgs(
+        get_stake_full_denom(),
+        Uint128::new(1000000),
+        Addr::unchecked("user_1"),
+    );
+    assert_eq!(res.messages.len(), 1 + mint_msgs.len());
+
+    let mut index = 0;
+    assert_eq!(
+        res.messages[index].msg,
+        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(1000000)).unwrap()
+    );
+
+    index += 1;
+    for msg in mint_msgs {
+        assert_eq!(res.messages[index].msg, msg);
+        index += 1;
+    }
+
+    assert_eq!(
+        State::default().stake_token.load(deps.as_ref().storage).unwrap(),
+        StakeToken {
+            utoken: stake.utoken.clone(),
+            dao_interface: stake.dao_interface.clone(),
+            denom: stake.denom.clone(),
+            total_supply: Uint128::new(1000000),
+            total_utoken_bonded: Uint128::new(1000000),
+        }
+    );
+
+    deps.querier.set_bank_balances(&[coin(12345, MOCK_UTOKEN)]);
+    // Charlie has the smallest amount of delegation, so the full deposit goes to him
+    let res = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_2", &[Coin::new(12345, MOCK_UTOKEN)]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(MOCK_UTOKEN.to_string(), Uint128::new(12345)),
+            belief_price: None,
+            max_spread: None,
+            to: Some("user_3".to_string()),
         },
     )
     .unwrap();
@@ -571,6 +735,145 @@ fn unbond() {
         mock_info("user_2", &[Coin::new(69420, get_stake_full_denom())]),
         ExecuteMsg::Unbond {
             receiver: Some("user_3".to_string()),
+        },
+    )
+    .unwrap();
+
+    assert_eq!(res.messages.len(), 3);
+    assert_eq!(
+        res.messages[0].msg,
+        stake.dao_interface.unbond_msg(&stake.utoken, Uint128::new(69420)).unwrap()
+    );
+    assert_eq!(
+        res.messages[1].msg,
+        chain_test().create_burn_msg(get_stake_full_denom(), Uint128::new(69420))
+    );
+    assert_eq!(
+        res.messages[2].msg,
+        stake.utoken.with_balance(69420u128).transfer_msg(&Addr::unchecked("user_3")).unwrap()
+    )
+}
+
+#[test]
+fn swap_unbond() {
+    let (mut deps, _) = setup_test();
+    let state = State::default();
+
+    // Only Stake token is accepted for unbonding requests
+    let err = execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("random_sender", &[Coin::new(100, "random_token")]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset("random_token".to_string(), Uint128::new(100)),
+            belief_price: None,
+            max_spread: None,
+            to: None,
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(err, ContractError::ExpectingSupportedTokens {});
+
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_1", &[Coin::new(1000000, MOCK_UTOKEN)]),
+        ExecuteMsg::Bond {
+            receiver: None,
+            donate: None,
+        },
+    )
+    .unwrap();
+
+    execute(
+        deps.as_mut(),
+        mock_env(),
+        mock_info("user_2", &[Coin::new(2000000, MOCK_UTOKEN)]),
+        ExecuteMsg::Bond {
+            receiver: None,
+            donate: None,
+        },
+    )
+    .unwrap();
+
+    let stake = state.stake_token.load(deps.as_ref().storage).unwrap();
+    assert_eq!(
+        stake,
+        StakeToken {
+            dao_interface: eris::hub::DaoInterface::Alliance {
+                addr: Addr::unchecked("alliance")
+            },
+            denom: "factory/cosmos2contract/stake".to_string(),
+            utoken: astroport::asset::AssetInfo::NativeToken {
+                denom: "utoken".to_string()
+            },
+            total_supply: Uint128::new(3000000),
+            total_utoken_bonded: Uint128::new(3000000),
+        }
+    );
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env_at_timestamp(269201), // est_unbond_start_time = 269200
+        mock_info("user_2", &[Coin::new(69420, get_stake_full_denom())]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(get_stake_full_denom(), Uint128::new(69421)),
+            belief_price: None,
+            max_spread: None,
+            to: Some("user_3".to_string()),
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Native token balance mismatch between the argument and the transferred"
+            .to_string()
+    );
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env_at_timestamp(269201), // est_unbond_start_time = 269200
+        mock_info("user_2", &[]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(get_stake_full_denom(), Uint128::new(69421)),
+            belief_price: None,
+            max_spread: None,
+            to: Some("user_3".to_string()),
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(err.to_string(), "Generic error: No funds sent".to_string());
+
+    let err = execute(
+        deps.as_mut(),
+        mock_env_at_timestamp(269201), // est_unbond_start_time = 269200
+        mock_info("user_2", &[Coin::new(69420, "random_token")]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(get_stake_full_denom(), Uint128::new(69421)),
+            belief_price: None,
+            max_spread: None,
+            to: Some("user_3".to_string()),
+        },
+    )
+    .unwrap_err();
+
+    assert_eq!(
+        err.to_string(),
+        "Generic error: Must send reserve token 'factory/cosmos2contract/stake'".to_string()
+    );
+
+    let res = execute(
+        deps.as_mut(),
+        mock_env_at_timestamp(269201), // est_unbond_start_time = 269200
+        mock_info("user_2", &[Coin::new(69420, get_stake_full_denom())]),
+        ExecuteMsg::Swap {
+            offer_asset: native_asset(get_stake_full_denom(), Uint128::new(69420)),
+            belief_price: None,
+            max_spread: None,
+            to: Some("user_3".to_string()),
         },
     )
     .unwrap();

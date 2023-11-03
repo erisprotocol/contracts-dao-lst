@@ -31,6 +31,9 @@ pub enum ContractError {
     #[error("Expecting stake token, received {0}")]
     ExpectingStakeToken(String),
 
+    #[error("Expecting one of the supported tokens")]
+    ExpectingSupportedTokens {},
+
     #[error("Protocol_reward_fee greater than max")]
     ProtocolRewardFeeTooHigh {},
 

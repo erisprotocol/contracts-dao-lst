@@ -17,7 +17,7 @@ X-injective-X = []
 X-osmosis-X = []
 X-sei-X = []
 
-default = ["X-kujira-X"]
+default = ["X-terra-X"]
 
 # [net]
 # git-fetch-with-cli = true
@@ -48,7 +48,7 @@ eris = { path = "../eris" }
 eris-chain-adapter = { path = "../eris-chain-adapter" }
 
 eris-arb-vault = { path = "../../contracts/arb-vault", package = "eris-arb-vault-kujira" }
-eris-staking-hub = { path = "../../contracts/dao-lst", package = "eris-dao-lst-kujira" }
+eris-staking-hub = { path = "../../contracts/dao-lst", package = "eris-dao-lst-terra" }
 eris-gov-voting-escrow = { path = "../../contracts/amp-governance/voting_escrow" }
 eris-gov-prop-gauges = { path = "../../contracts/amp-governance/prop_gauges" }
 

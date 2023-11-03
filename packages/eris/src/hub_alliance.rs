@@ -42,6 +42,15 @@ pub enum ExecuteMsg {
         receiver: Option<String>,
         donate: Option<bool>,
     },
+
+    /// Same as bond / unbond, belief_price, max_spread are ignored
+    Swap {
+        offer_asset: Asset,
+        belief_price: Option<Decimal>,
+        max_spread: Option<Decimal>,
+        to: Option<String>,
+    },
+
     /// Transfer ownership to another account; will not take effect unless the new owner accepts
     TransferOwnership {
         new_owner: String,
