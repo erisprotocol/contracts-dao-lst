@@ -199,6 +199,7 @@ pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<
             start_after,
             limit,
         } => to_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
+        QueryMsg::Pair {} => to_binary(&queries::query_pair(deps, env)?),
     }
 }
 

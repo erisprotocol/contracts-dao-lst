@@ -149,6 +149,33 @@ pub enum QueryMsg {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
+
+    /// Returns information about a pair in an object of type [`super::asset::PairInfo`].
+    #[returns(PairInfo)]
+    Pair {},
+}
+
+/// This structure stores the main parameters for an Astroport pair
+#[cw_serde]
+pub struct PairInfo {
+    /// Asset information for the assets in the pool
+    pub asset_infos: Vec<AssetInfo>,
+    /// Pair contract address
+    pub contract_addr: Addr,
+    /// Pair LP token address
+    pub liquidity_token: Addr,
+    /// The pool type (xyk, stableswap etc) available in [`PairType`]
+    pub pair_type: PairType,
+}
+
+#[cw_serde]
+pub enum PairType {
+    /// XYK pair type
+    Xyk {},
+    /// Stable pair type
+    Stable {},
+    /// Custom pair type
+    Custom(String),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -1,9 +1,10 @@
 use std::ops::Div;
 
+use astroport::asset::native_asset_info;
 use cosmwasm_std::{Decimal, Deps, Env, Order, StdResult};
 use cw_storage_plus::Bound;
 
-use eris::hub_alliance::{ConfigResponse, ExchangeRatesResponse, StateResponse};
+use eris::hub_alliance::{ConfigResponse, ExchangeRatesResponse, PairInfo, StateResponse};
 use eris_chain_adapter::types::CustomQueryType;
 
 use crate::constants::DAY;
@@ -87,5 +88,17 @@ pub fn query_exchange_rates(
     Ok(ExchangeRatesResponse {
         exchange_rates,
         apr,
+    })
+}
+
+pub fn query_pair(deps: Deps<CustomQueryType>, env: Env) -> StdResult<PairInfo> {
+    let state = State::default();
+    let stake_token = state.stake_token.load(deps.storage)?;
+
+    Ok(PairInfo {
+        asset_infos: vec![stake_token.utoken, native_asset_info(stake_token.denom)],
+        contract_addr: env.contract.address.clone(),
+        liquidity_token: env.contract.address,
+        pair_type: eris::hub_alliance::PairType::Custom("virtual".to_string()),
     })
 }
