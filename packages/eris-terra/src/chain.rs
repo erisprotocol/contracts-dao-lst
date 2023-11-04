@@ -35,15 +35,15 @@ impl
         vec![
             CosmosMsg::Custom(CustomExecuteMsg::Token(
                 crate::custom_execute_msg::TokenExecuteMsg::MintTokens {
-                    denom: full_denom.clone(),
+                    denom: full_denom,
                     amount,
-                    mint_to_address: self.contract.to_string(),
+                    mint_to_address: recipient.to_string(),
                 },
             )),
-            CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
-                to_address: recipient.to_string(),
-                amount: coins(amount.u128(), full_denom),
-            }),
+            // CosmosMsg::Bank(cosmwasm_std::BankMsg::Send {
+            //     to_address: recipient.to_string(),
+            //     amount: coins(amount.u128(), full_denom),
+            // }),
         ]
     }
 

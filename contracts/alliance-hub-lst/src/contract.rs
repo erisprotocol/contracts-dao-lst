@@ -46,7 +46,7 @@ pub fn execute(
                 state,
                 stake,
                 token_to_bond,
-                receiver.map(|s| api.addr_validate(&s)).transpose()?.unwrap_or(info.sender),
+                api.addr_validate(&receiver.unwrap_or_else(|| info.sender.to_string()))?,
                 donate.unwrap_or(false),
             )
         },
@@ -92,7 +92,7 @@ pub fn execute(
                     state,
                     stake,
                     token_to_bond,
-                    to.map(|s| api.addr_validate(&s)).transpose()?.unwrap_or(info.sender),
+                    api.addr_validate(&to.unwrap_or_else(|| info.sender.to_string()))?,
                     false,
                 );
             } else if let AssetInfo::NativeToken {
