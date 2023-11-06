@@ -1,11 +1,15 @@
-use astroport::asset::AssetInfo;
+use astroport::asset::{token_asset_info, AssetInfo};
 use cosmwasm_std::{
-    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult,
+    entry_point, from_binary, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    StdResult,
 };
 use cw2::set_contract_version;
 
+use cw20::Cw20ReceiveMsg;
 use eris::helper::validate_received_funds;
-use eris::hub_alliance::{CallbackMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
+use eris::hub_alliance::{
+    CallbackMsg, ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, ReceiveMsg,
+};
 use eris_chain_adapter::types::CustomQueryType;
 
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
@@ -32,6 +36,7 @@ pub fn execute(
 ) -> ContractResult {
     let api = deps.api;
     match msg {
+        ExecuteMsg::Receive(cw20_msg) => receive(deps, env, info, cw20_msg),
         ExecuteMsg::Bond {
             receiver,
             donate,
@@ -156,6 +161,54 @@ pub fn execute(
             allow_donations,
             default_max_spread,
         ),
+    }
+}
+
+fn receive(deps: DepsMut, env: Env, info: MessageInfo, cw20_msg: Cw20ReceiveMsg) -> ContractResult {
+    let api = deps.api;
+    match from_binary(&cw20_msg.msg)? {
+        ReceiveMsg::Swap {
+            to,
+            ..
+        } => {
+            let state = State::default();
+            let stake_token = state.stake_token.load(deps.storage)?;
+
+            if token_asset_info(info.sender.clone()) != stake_token.utoken {
+                return Err(ContractError::ExpectingStakeToken(info.sender.into()));
+            }
+
+            execute::bond(
+                deps,
+                env,
+                state,
+                stake_token,
+                cw20_msg.amount,
+                api.addr_validate(&to.unwrap_or(cw20_msg.sender))?,
+                false,
+            )
+        },
+        ReceiveMsg::Bond {
+            receiver,
+            donate,
+        } => {
+            let state = State::default();
+            let stake_token = state.stake_token.load(deps.storage)?;
+
+            if token_asset_info(info.sender.clone()) != stake_token.utoken {
+                return Err(ContractError::ExpectingStakeToken(info.sender.into()));
+            }
+
+            execute::bond(
+                deps,
+                env,
+                state,
+                stake_token,
+                cw20_msg.amount,
+                api.addr_validate(&receiver.unwrap_or(cw20_msg.sender))?,
+                donate.unwrap_or(false),
+            )
+        },
     }
 }
 

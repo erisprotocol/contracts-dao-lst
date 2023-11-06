@@ -63,6 +63,9 @@ pub enum DaoInterface<T> {
     Alliance {
         addr: T,
     },
+    Capa {
+        gov: T,
+    },
 }
 
 impl DaoInterface<String> {
@@ -88,6 +91,11 @@ impl DaoInterface<String> {
                 addr,
             } => DaoInterface::Alliance {
                 addr: api.addr_validate(addr)?,
+            },
+            DaoInterface::Capa {
+                gov,
+            } => DaoInterface::Capa {
+                gov: api.addr_validate(gov)?,
             },
         })
     }

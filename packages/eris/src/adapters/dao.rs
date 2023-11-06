@@ -172,6 +172,32 @@ pub struct Proposal {
     pub expires: Expiration,
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CapaVoteOption {
+    Yes,
+    No,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CapaExecuteMsg {
+    CastVote {
+        poll_id: u64,
+        vote: CapaVoteOption,
+        amount: Uint128,
+    },
+
+    WithdrawVotingTokens {
+        amount: Option<Uint128>,
+    },
+
+    Claim {},
+
+    /// cw20 callback
+    StakeVotingTokens {},
+}
+
 impl DaoInterface<Addr> {
     pub fn deposit_msg(
         &self,
@@ -210,6 +236,17 @@ impl DaoInterface<Addr> {
                 DaoInterface::Alliance {
                     ..
                 } => Err(StdError::generic_err("cw20 not supported for alliance")),
+                DaoInterface::Capa {
+                    gov,
+                } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: contract_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Send {
+                        contract: gov.to_string(),
+                        amount,
+                        msg: to_binary(&CapaExecuteMsg::StakeVotingTokens {})?,
+                    })?,
+                    funds: vec![],
+                })),
             },
             AssetInfo::NativeToken {
                 denom,
@@ -232,6 +269,9 @@ impl DaoInterface<Addr> {
                     msg: to_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::Stake {})?,
                     funds: vec![coin(amount.u128(), denom)],
                 })),
+                DaoInterface::Capa {
+                    ..
+                } => Err(StdError::generic_err("native_token not supported for capa")),
             },
         }
     }
@@ -273,6 +313,15 @@ impl DaoInterface<Addr> {
                 ))?,
                 funds: vec![],
             })),
+            DaoInterface::Capa {
+                gov,
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: gov.to_string(),
+                msg: to_binary(&CapaExecuteMsg::WithdrawVotingTokens {
+                    amount: Some(amount),
+                })?,
+                funds: vec![],
+            })),
         }
     }
 
@@ -296,7 +345,10 @@ impl DaoInterface<Addr> {
             })),
             DaoInterface::Alliance {
                 ..
-            } => Err(StdError::generic_err("claiming not supported for alliance"))?,
+            }
+            | DaoInterface::Capa {
+                ..
+            } => Err(StdError::generic_err("claiming not supported for alliance, capa"))?,
         }
     }
 
@@ -342,6 +394,13 @@ impl DaoInterface<Addr> {
                 ))?,
                 funds: vec![],
             })),
+            DaoInterface::Capa {
+                gov,
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: gov.to_string(),
+                msg: to_binary(&CapaExecuteMsg::Claim {})?,
+                funds: vec![],
+            })),
         }
     }
 
@@ -385,7 +444,29 @@ impl DaoInterface<Addr> {
             })),
             DaoInterface::Alliance {
                 ..
-            } => Err(StdError::generic_err("voting not supported for alliance"))?,
+            }
+            | DaoInterface::Capa {
+                ..
+            } => Err(StdError::generic_err("voting not supported for alliance, capa"))?,
+            // DaoInterface::Capa {
+            //     ..
+            // } => Err(StdError::generic_err("voting not supported for capa"))?,
+            // Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            //     contract_addr: gov.to_string(),
+            //     msg: to_binary(&CapaExecuteMsg::CastVote {
+            //         poll_id: proposal_id,
+            //         vote: match outcome {
+            //             VoteOption::Yes => CapaVoteOption::Yes,
+            //             VoteOption::No => CapaVoteOption::No,
+            //             VoteOption::Abstain => {
+            //                 Err(StdError::generic_err("voting abstain not supported for capa"))?
+            //             },
+            //             VoteOption::NoWithVeto => CapaVoteOption::No,
+            //         },
+            //         amount: ,
+            //     })?,
+            //     funds: vec![],
+            // })),
         }
     }
 
@@ -443,7 +524,10 @@ impl DaoInterface<Addr> {
             },
             DaoInterface::Alliance {
                 ..
-            } => Err(StdError::generic_err("proposal not supported for alliance"))?,
+            }
+            | DaoInterface::Capa {
+                ..
+            } => Err(StdError::generic_err("proposal not supported for alliance, capa"))?,
         }
     }
 }

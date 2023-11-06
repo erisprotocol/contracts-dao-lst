@@ -1,6 +1,7 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, Decimal, Empty, StdResult, Uint128, WasmMsg};
+use cw20::Cw20ReceiveMsg;
 use eris_chain_adapter::types::{
     CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType,
 };
@@ -37,6 +38,8 @@ pub struct InstantiateMsg {
 
 #[cw_serde]
 pub enum ExecuteMsg {
+    /// Implements the Cw20 receiver interface
+    Receive(Cw20ReceiveMsg),
     /// Bond specified amount of Token
     Bond {
         receiver: Option<String>,
@@ -94,6 +97,21 @@ pub enum ExecuteMsg {
     /// if `epoch_time` has elapsed since when the last unbonding queue was executed.
     Unbond {
         receiver: Option<String>,
+    },
+}
+
+#[cw_serde]
+pub enum ReceiveMsg {
+    /// Swap a given amount of asset
+    Swap {
+        ask_asset_info: Option<AssetInfo>,
+        belief_price: Option<Decimal>,
+        max_spread: Option<Decimal>,
+        to: Option<String>,
+    },
+    Bond {
+        receiver: Option<String>,
+        donate: Option<bool>,
     },
 }
 
