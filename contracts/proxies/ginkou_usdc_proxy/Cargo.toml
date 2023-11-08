@@ -1,0 +1,41 @@
+[package]
+name = "eris-ginkou-usdc-proxy"
+version = "1.0.0"
+authors = ["devs <devs@erisprotocol.com>"]
+edition = "2021"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all instantiate/execute/query exports
+library = []
+
+
+[dependencies]
+cosmwasm-std = "1.1.3"
+cosmwasm-schema = "1.1.3"
+cw2 = "0.13.2"
+cw20 = "1.1.0"
+cw-storage-plus = "0.15.1"
+cw-ownable = "0.5.1"
+schemars = "0.8.10"
+serde = { version = "1.0.145", default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.31" }
+eris = { git = "https://github.com/erisprotocol/contracts-tokenfactory.git", default-features = false, rev = "f38bd370400dd9873e6872538ee10e3602b19684" }
+astroport = { git = "https://github.com/astroport-fi/astroport-core.git", default-features = false, rev = "3b44a4044b823a145730f66ffaf7ae4205b2cd35" }
+
+
+[dev-dependencies]
+cw-multi-test = "0.15.1"

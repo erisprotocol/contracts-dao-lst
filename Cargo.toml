@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "contracts/amp-governance/*",
+    "contracts/proxies/*",
     "contracts/dao-lst",
     "contracts/alliance-hub-lst",
     "contracts/lst-factory",

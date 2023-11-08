@@ -9,13 +9,11 @@ use crate::{
     types::{CoinType, CustomMsgType, DenomType, StageType, WithdrawType},
 };
 
-pub struct WhiteWhaleChain {
+pub struct Chain {
     pub contract: Addr,
 }
 
-impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, Empty>
-    for WhiteWhaleChain
-{
+impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, Empty> for Chain {
     fn create_denom_msg(&self, _full_denom: String, subdenom: String) -> CosmosMsg<CustomMsgType> {
         MsgCreateDenom {
             sender: self.contract.to_string(),

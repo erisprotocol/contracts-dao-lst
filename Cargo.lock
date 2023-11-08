@@ -1032,7 +1032,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-alliance-hub-lst-terra"
+name = "eris-alliance-hub-lst-whitewhale"
 version = "1.2.0"
 dependencies = [
  "alliance-protocol",
@@ -1107,7 +1107,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-dao-lst-terra"
+name = "eris-dao-lst-whitewhale"
 version = "1.0.1"
 dependencies = [
  "astroport 2.8.0",
@@ -1122,6 +1122,24 @@ dependencies = [
  "itertools",
  "kujira",
  "protobuf 3.2.0",
+ "serde",
+ "thiserror",
+]
+
+[[package]]
+name = "eris-ginkou-usdc-proxy"
+version = "1.0.0"
+dependencies = [
+ "astroport 2.8.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.15.1",
+ "cw-ownable",
+ "cw-storage-plus 0.15.1",
+ "cw2 0.13.4",
+ "cw20 1.1.0",
+ "eris 1.6.0 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
+ "schemars",
  "serde",
  "thiserror",
 ]

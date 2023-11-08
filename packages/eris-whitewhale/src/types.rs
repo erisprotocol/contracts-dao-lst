@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Empty};
+use cosmwasm_std::{Addr, Empty, Uint128};
 use cw_asset::{Asset, AssetInfo};
 
 #[cw_serde]
@@ -35,3 +35,12 @@ impl StageType {
 pub type DenomType = AssetInfo;
 pub type CustomMsgType = Empty;
 pub type CoinType = Asset;
+pub type CustomQueryType = Empty;
+pub type MultiSwapRouterType = Empty;
+
+pub fn get_asset(info: DenomType, amount: Uint128) -> CoinType {
+    Asset {
+        info,
+        amount,
+    }
+}

@@ -234,8 +234,19 @@ impl DaoInterface<Addr> {
                     funds: vec![],
                 })),
                 DaoInterface::Alliance {
-                    ..
-                } => Err(StdError::generic_err("cw20 not supported for alliance")),
+                    addr,
+                } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: contract_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Send {
+                        contract: addr.to_string(),
+                        amount,
+                        msg: to_binary(
+                            &alliance_protocol::alliance_protocol::ExecuteMsg::Stake {},
+                        )?,
+                    })?,
+                    funds: vec![],
+                })),
+
                 DaoInterface::Capa {
                     gov,
                 } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -309,7 +320,7 @@ impl DaoInterface<Addr> {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: addr.to_string(),
                 msg: to_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::Unstake(
-                    to_cw_asset(utoken, amount)?,
+                    to_cw_asset(utoken, amount),
                 ))?,
                 funds: vec![],
             })),
@@ -390,7 +401,7 @@ impl DaoInterface<Addr> {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: addr.to_string(),
                 msg: to_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::ClaimRewards(
-                    cw_asset::AssetInfo::native(to_cw_asset_denom(utoken)?),
+                    to_cw_asset_info(utoken),
                 ))?,
                 funds: vec![],
             })),
@@ -532,17 +543,24 @@ impl DaoInterface<Addr> {
     }
 }
 
-fn to_cw_asset(utoken: &AssetInfo, amount: Uint128) -> Result<cw_asset::AssetBase<Addr>, StdError> {
-    Ok(cw_asset::Asset::native(to_cw_asset_denom(utoken)?, amount))
-}
-
-fn to_cw_asset_denom(utoken: &AssetInfo) -> Result<String, StdError> {
-    Ok(match utoken {
+fn to_cw_asset(utoken: &AssetInfo, amount: Uint128) -> cw_asset::Asset {
+    match utoken {
         AssetInfo::Token {
-            ..
-        } => Err(StdError::generic_err("cw20 not supported for alliance"))?,
+            contract_addr,
+        } => cw_asset::Asset::cw20(contract_addr.clone(), amount),
         AssetInfo::NativeToken {
             denom,
-        } => denom.to_string(),
-    })
+        } => cw_asset::Asset::native(denom, amount),
+    }
+}
+
+fn to_cw_asset_info(utoken: &AssetInfo) -> cw_asset::AssetInfo {
+    match utoken {
+        AssetInfo::Token {
+            contract_addr,
+        } => cw_asset::AssetInfo::cw20(contract_addr.clone()),
+        AssetInfo::NativeToken {
+            denom,
+        } => cw_asset::AssetInfo::native(denom),
+    }
 }

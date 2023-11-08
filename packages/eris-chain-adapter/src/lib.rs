@@ -56,21 +56,24 @@ pub mod types {
 #[cfg(feature = "X-whitewhale-X")]
 pub mod types {
     use cosmwasm_std::DepsMut;
+    use cosmwasm_std::Empty;
     use cosmwasm_std::Env;
     use cosmwasm_std::StdError;
     use cosmwasm_std::StdResult;
     use cosmwasm_std::Uint128;
+    use eris_whitewhale::chain::Chain;
     use std::collections::HashMap;
 
     use eris_chain_shared::chain_trait::ChainInterface;
-    use eris_whitewhale::chain::WhiteWhaleChain;
-    use eris_whitewhale::types::get_asset;
 
-    use eris_whitewhale::types::CoinType;
+    pub use eris_whitewhale::types::get_asset;
+    pub use eris_whitewhale::types::CoinType;
     pub use eris_whitewhale::types::CustomMsgType;
+    pub use eris_whitewhale::types::CustomQueryType;
     pub use eris_whitewhale::types::DenomType;
-    pub use eris_whitewhale::types::HubChainConfig;
-    pub use eris_whitewhale::types::HubChainConfigInput;
+    // pub use eris_whitewhale::types::MantaMsg;
+    // pub use eris_whitewhale::types::MantaSwap;
+    pub use eris_whitewhale::types::MultiSwapRouterType;
     pub use eris_whitewhale::types::StageType;
     pub use eris_whitewhale::types::WithdrawType;
 
@@ -79,16 +82,11 @@ pub mod types {
     #[inline(always)]
     pub fn chain(
         env: &Env,
-    ) -> impl ChainInterface<CustomMsgType, DenomType, WithdrawType, StageType, HubChainConfig>
+    ) -> impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType, Empty>
     {
         Chain {
             contract: env.contract.address.clone(),
         }
-    }
-
-    #[inline(always)]
-    pub fn test_chain_config() -> HubChainConfigInput {
-        HubChainConfigInput {}
     }
 
     /// queries all balances and converts it to a hashmap
