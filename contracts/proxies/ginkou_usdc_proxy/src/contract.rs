@@ -13,7 +13,7 @@ use astroport::asset::{native_asset_info, token_asset_info, AssetInfoExt, PairIn
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
     from_binary, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult, Storage, WasmMsg,
+    StdResult, Storage,
 };
 use cw2::set_contract_version;
 use cw20::Cw20ReceiveMsg;
@@ -102,14 +102,12 @@ fn send_to(
     asset_info: astroport::asset::AssetInfo,
 ) -> CustomResult<CosmosMsg> {
     let receiver = deps.api.addr_validate(&to)?;
-    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-        contract_addr: env.contract.address.to_string(),
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::SendTo {
-            to: receiver,
-            asset_info,
-        }))?,
-        funds: vec![],
-    }))
+
+    Ok(CallbackMsg::SendTo {
+        to: receiver,
+        asset_info,
+    }
+    .into_cosmos_msg(&env.contract.address)?)
 }
 
 fn callback(

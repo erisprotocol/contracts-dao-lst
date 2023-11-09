@@ -1,5 +1,5 @@
 [package]
-name = "eris-ginkou-usdc-proxy"
+name = "eris-usdc-proxy"
 version = "1.0.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2021"

@@ -1,3 +1,4 @@
+pub mod alliancehub;
 pub mod asset;
 pub mod dao;
 pub mod generator;

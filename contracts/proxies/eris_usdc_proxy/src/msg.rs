@@ -1,7 +1,7 @@
 use astroport::asset::{Asset, AssetInfo, PairInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, Decimal, StdResult, WasmMsg};
-use cw20::Cw20ReceiveMsg;
+use eris::adapters::alliancehub::AllianceHub;
 
 use crate::ginkou::Ginkou;
 
@@ -10,12 +10,24 @@ pub struct InstantiateMsg {
     pub ginkou: String,
     pub usdc_denom: String,
     pub musdc_addr: String,
+
+    pub hub: String,
+    pub stake: String,
 }
 
 #[cw_serde]
 pub enum ExecuteMsg {
-    /// Implements the Cw20 receiver interface
-    Receive(Cw20ReceiveMsg),
+    /// Bond specified amount of Token
+    Bond {
+        receiver: Option<String>,
+        donate: Option<bool>,
+    },
+
+    /// Submit an unbonding request to the current unbonding queue; automatically invokes `unbond`
+    /// if `epoch_time` has elapsed since when the last unbonding queue was executed.
+    Unbond {
+        receiver: Option<String>,
+    },
 
     /// Same as bond / unbond, belief_price, max_spread are ignored
     Swap {
@@ -29,19 +41,12 @@ pub enum ExecuteMsg {
 }
 
 #[cw_serde]
-pub enum ReceiveMsg {
-    /// Swap a given amount of asset
-    Swap {
-        ask_asset_info: Option<AssetInfo>,
-        belief_price: Option<Decimal>,
-        max_spread: Option<Decimal>,
-
-        to: Option<String>,
-    },
-}
-
-#[cw_serde]
 pub enum CallbackMsg {
+    Bond {
+        receiver: Addr,
+        donate: Option<bool>,
+    },
+    Unbond {},
     SendTo {
         to: Addr,
         asset_info: AssetInfo,
@@ -73,4 +78,6 @@ pub struct MigrateMsg {}
 #[cw_serde]
 pub struct Config {
     pub ginkou: Ginkou,
+    pub hub: AllianceHub,
+    pub stake: String,
 }

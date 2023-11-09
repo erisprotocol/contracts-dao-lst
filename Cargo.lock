@@ -1138,7 +1138,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 1.1.0",
- "eris 1.6.0 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
+ "eris 1.6.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1278,6 +1278,24 @@ dependencies = [
  "prost-types",
  "schemars",
  "serde",
+]
+
+[[package]]
+name = "eris-usdc-proxy"
+version = "1.0.0"
+dependencies = [
+ "astroport 2.8.0",
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw-multi-test 0.15.1",
+ "cw-ownable",
+ "cw-storage-plus 0.15.1",
+ "cw2 0.13.4",
+ "cw20 1.1.0",
+ "eris 1.6.0",
+ "schemars",
+ "serde",
+ "thiserror",
 ]
 
 [[package]]
