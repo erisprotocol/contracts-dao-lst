@@ -1003,6 +1003,19 @@ dependencies = [
 [[package]]
 name = "eris"
 version = "1.6.0"
+source = "git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684#f38bd370400dd9873e6872538ee10e3602b19684"
+dependencies = [
+ "cosmwasm-schema",
+ "cosmwasm-std",
+ "cw20 0.13.4",
+ "eris-chain-adapter 1.2.2 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
+ "schemars",
+ "serde",
+]
+
+[[package]]
+name = "eris"
+version = "1.7.0"
 dependencies = [
  "alliance-protocol",
  "astroport 2.8.0",
@@ -1019,20 +1032,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris"
-version = "1.6.0"
-source = "git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684#f38bd370400dd9873e6872538ee10e3602b19684"
-dependencies = [
- "cosmwasm-schema",
- "cosmwasm-std",
- "cw20 0.13.4",
- "eris-chain-adapter 1.2.2 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
- "schemars",
- "serde",
-]
-
-[[package]]
-name = "eris-alliance-hub-lst-whitewhale"
+name = "eris-alliance-hub-lst-terra"
 version = "1.2.0"
 dependencies = [
  "alliance-protocol",
@@ -1042,7 +1042,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 1.1.0",
  "cw20 1.1.0",
- "eris 1.6.0",
+ "eris 1.7.0",
  "eris-chain-adapter 1.2.2",
  "eris-chain-shared 1.2.2",
  "itertools",
@@ -1107,8 +1107,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-dao-lst-whitewhale"
-version = "1.0.1"
+name = "eris-dao-lst-terra"
+version = "1.1.0"
 dependencies = [
  "astroport 2.8.0",
  "cosmwasm-schema",
@@ -1116,7 +1116,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 1.1.0",
  "cw20 1.1.0",
- "eris 1.6.0",
+ "eris 1.7.0",
  "eris-chain-adapter 1.2.2",
  "eris-chain-shared 1.2.2",
  "itertools",
@@ -1138,7 +1138,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 1.1.0",
- "eris 1.6.0",
+ "eris 1.7.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1163,7 +1163,7 @@ dependencies = [
  "cw2 1.1.0",
  "cw20 0.13.4",
  "cw20 1.1.0",
- "eris 1.6.0",
+ "eris 1.7.0",
  "eris-chain-adapter 1.2.2",
  "eris-chain-shared 1.2.2",
  "eris-gov-voting-escrow",
@@ -1187,7 +1187,7 @@ dependencies = [
  "cw2 1.1.0",
  "cw20 1.1.0",
  "cw20-base 1.1.0",
- "eris 1.6.0",
+ "eris 1.7.0",
  "proptest",
  "thiserror",
 ]
@@ -1245,7 +1245,7 @@ dependencies = [
  "cw-ownable",
  "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
- "eris 1.6.0 (git+https://github.com/erisprotocol/contracts-tokenfactory.git?rev=f38bd370400dd9873e6872538ee10e3602b19684)",
+ "eris 1.6.0",
  "schemars",
  "serde",
  "thiserror",
@@ -1292,7 +1292,7 @@ dependencies = [
  "cw-storage-plus 0.15.1",
  "cw2 0.13.4",
  "cw20 1.1.0",
- "eris 1.6.0",
+ "eris 1.7.0",
  "schemars",
  "serde",
  "thiserror",

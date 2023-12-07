@@ -270,6 +270,7 @@ fn donating() {
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
+            dao_interface: None,
         },
     )
     .unwrap();
@@ -1458,6 +1459,7 @@ fn update_fee() {
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
+            dao_interface: None,
         },
     )
     .unwrap_err();
@@ -1478,6 +1480,7 @@ fn update_fee() {
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
+            dao_interface: None,
         },
     )
     .unwrap_err();
@@ -1498,6 +1501,7 @@ fn update_fee() {
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
+            dao_interface: None,
         },
     )
     .unwrap();
@@ -1548,6 +1552,7 @@ fn vote() {
             default_max_spread: None,
             epoch_period: None,
             unbond_period: None,
+            dao_interface: None,
         },
     )
     .unwrap();
@@ -1576,7 +1581,13 @@ fn vote() {
     .unwrap();
     assert_eq!(res.messages.len(), 1);
 
-    assert_eq!(res.messages[0].msg, stake.dao_interface.vote_msg(3, VoteOption::Yes).unwrap());
+    assert_eq!(
+        res.messages[0].msg,
+        stake
+            .dao_interface
+            .vote_msg(3, VoteOption::Yes, Addr::unchecked(""), Uint128::zero())
+            .unwrap()
+    );
 }
 
 //--------------------------------------------------------------------------------------------------

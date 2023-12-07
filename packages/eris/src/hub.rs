@@ -52,6 +52,11 @@ pub enum DaoInterface<T> {
         addr: T,
         fund_distributor: T,
     },
+    EnterpriseV2 {
+        gov: T,
+        membership: T,
+        distributor: T,
+    },
     Cw4 {
         // calling bond, unbond, claim  (CW4)
         addr: T,
@@ -77,6 +82,15 @@ impl DaoInterface<String> {
             } => DaoInterface::Enterprise {
                 addr: api.addr_validate(addr)?,
                 fund_distributor: api.addr_validate(fund_distributor)?,
+            },
+            DaoInterface::EnterpriseV2 {
+                distributor,
+                gov,
+                membership,
+            } => DaoInterface::EnterpriseV2 {
+                distributor: api.addr_validate(distributor)?,
+                gov: api.addr_validate(gov)?,
+                membership: api.addr_validate(membership)?,
             },
             DaoInterface::Cw4 {
                 addr,
@@ -169,6 +183,9 @@ pub enum ExecuteMsg {
         epoch_period: Option<u64>,
         /// The staking module's unbonding time, in seconds
         unbond_period: Option<u64>,
+
+        /// Update the DAO config
+        dao_interface: Option<DaoInterface<String>>,
     },
 
     /// Submit an unbonding request to the current unbonding queue; automatically invokes `unbond`

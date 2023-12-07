@@ -104,6 +104,7 @@ pub fn execute(
             default_max_spread,
             epoch_period,
             unbond_period,
+            dao_interface,
         } => execute::update_config(
             env,
             deps,
@@ -118,6 +119,7 @@ pub fn execute(
             default_max_spread,
             epoch_period,
             unbond_period,
+            dao_interface,
         ),
         ExecuteMsg::QueueUnbond {
             receiver,

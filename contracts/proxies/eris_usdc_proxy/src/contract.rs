@@ -15,7 +15,7 @@ use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Storage,
 };
 use cw2::set_contract_version;
-use eris::{adapters::alliancehub::AllianceHub, helper::validate_received_funds};
+use eris::{adapters::alliancehub::AllianceHub, helper::validate_received_funds, CustomMsgExt2};
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -120,7 +120,9 @@ fn unbond(
     Ok(Response::new()
         .add_attribute("action", "erisproxy/unbond")
         // 1. unbond
-        .add_message(config.hub.unbond_msg(config.stake, token_to_unbond.u128(), None)?)
+        .add_message(
+            config.hub.unbond_msg(config.stake, token_to_unbond.u128(), None)?.to_normal()?,
+        )
         // 2. withdraw
         .add_message(CallbackMsg::Unbond {}.into_cosmos_msg(&env.contract.address)?)
         // 3. send to receiver
@@ -162,11 +164,10 @@ fn callback(
             let balance = musdc.query_pool(&deps.querier, env.contract.address)?;
 
             Ok(Response::new().add_attribute("action", "erisproxy/callback-bond").add_message(
-                config.hub.bond_msg(
-                    musdc.with_balance(balance),
-                    Some(receiver.to_string()),
-                    donate,
-                )?,
+                config
+                    .hub
+                    .bond_msg(musdc.with_balance(balance), Some(receiver.to_string()), donate)?
+                    .to_normal()?,
             ))
         },
         CallbackMsg::Unbond {} => {

@@ -10,8 +10,8 @@ use eris::adapters::asset::AssetEx;
 use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
 
 use eris::hub::{
-    Batch, CallbackMsg, ExecuteMsg, FeeConfig, InstantiateMsg, MultiSwapRouter, PendingBatch,
-    SingleSwapConfig, StakeToken, UnbondRequest,
+    Batch, CallbackMsg, DaoInterface, ExecuteMsg, FeeConfig, InstantiateMsg, MultiSwapRouter,
+    PendingBatch, SingleSwapConfig, StakeToken, UnbondRequest,
 };
 use eris_chain_adapter::types::{
     chain, get_balances_hashmap, CoinType, CustomMsgType, CustomQueryType, DenomType, WithdrawType,
@@ -918,6 +918,7 @@ pub fn update_config(
     default_max_spread: Option<u64>,
     epoch_period: Option<u64>,
     unbond_period: Option<u64>,
+    dao_interface: Option<DaoInterface<String>>,
 ) -> ContractResult {
     let state = State::default();
 
@@ -956,6 +957,12 @@ pub fn update_config(
 
     if let Some(operator) = operator {
         state.operator.save(deps.storage, &deps.api.addr_validate(operator.as_str())?)?;
+    }
+
+    if let Some(dao_interface) = dao_interface {
+        let mut stake = state.stake_token.load(deps.storage)?;
+        stake.dao_interface = dao_interface.validate(deps.api)?;
+        state.stake_token.save(deps.storage, &stake)?;
     }
 
     if stages_preset.is_some() {

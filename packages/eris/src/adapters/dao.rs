@@ -26,10 +26,26 @@ pub enum EnterpriseExecuteMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+pub enum EnterpriseExecuteMsgV2 {
+    Unstake(EnterpriseUnstakeMsgV2),
+    // CastVote(CastVoteMsgV2),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct CastVoteMsg {
     pub proposal_id: u64,
     pub outcome: VoteOutcome,
 }
+
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+// #[serde(rename_all = "snake_case")]
+// pub struct CastVoteMsgV2 {
+//     pub poll_id: u64,
+//     pub outcome: VoteOutcome,
+//     pub voter: Addr,
+//     pub amount: Uint128,
+// }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -58,6 +74,12 @@ impl From<u8> for VoteOutcome {
 #[serde(rename_all = "snake_case")]
 pub enum EnterpriseUnstakeMsg {
     Cw20(EnterpriseUnstakeCw20Msg),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct EnterpriseUnstakeMsgV2 {
+    pub amount: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -111,28 +133,26 @@ pub struct Cw3ProposalResponse {
     pub expires: Expiration,
 }
 
-// #[cw_serde]
-// pub enum EnterpriseQueryMsg {
-//     Poll(PollParams),
-// }
-
 // /// Unique identifier for a poll.
 // pub type PollId = u64;
 
-// #[cw_serde]
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+// #[serde(rename_all = "snake_case")]
 // /// Params for querying a poll.
 // pub struct PollParams {
 //     /// ID of the poll to be queried.
 //     pub poll_id: PollId,
 // }
 
-// #[cw_serde]
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+// #[serde(rename_all = "snake_case")]
 // /// Response model for querying a poll.
 // pub struct EnterprisePollResponse {
 //     /// The poll.
 //     pub poll: Poll,
 // }
-// #[cw_serde]
+// #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+// #[serde(rename_all = "snake_case")]
 // /// A poll.
 // pub struct Poll {
 //     /// Unique identifier for the poll.
@@ -151,6 +171,7 @@ pub struct ProposalResponse {
 #[serde(rename_all = "snake_case")]
 pub enum EnterpriseQueryMsg {
     Proposal(ProposalParams),
+    // Poll(PollParams),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -220,6 +241,18 @@ impl DaoInterface<Addr> {
                     })?,
                     funds: vec![],
                 })),
+                DaoInterface::EnterpriseV2 {
+                    membership,
+                    ..
+                } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: contract_addr.to_string(),
+                    msg: to_binary(&Cw20ExecuteMsg::Send {
+                        contract: membership.to_string(),
+                        amount,
+                        msg: to_binary(&EnterpriseCw20HookMsg::Stake {})?,
+                    })?,
+                    funds: vec![],
+                })),
 
                 DaoInterface::Cw4 {
                     addr,
@@ -264,6 +297,9 @@ impl DaoInterface<Addr> {
             } => match &self {
                 DaoInterface::Enterprise {
                     ..
+                }
+                | DaoInterface::EnterpriseV2 {
+                    ..
                 } => Err(StdError::generic_err("native_token not supported for enterprise")),
                 DaoInterface::Cw4 {
                     addr,
@@ -303,6 +339,16 @@ impl DaoInterface<Addr> {
                         amount,
                     },
                 )))?,
+                funds: vec![],
+            })),
+            DaoInterface::EnterpriseV2 {
+                membership,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: membership.to_string(),
+                msg: to_binary(&EnterpriseExecuteMsgV2::Unstake(EnterpriseUnstakeMsgV2 {
+                    amount,
+                }))?,
                 funds: vec![],
             })),
             DaoInterface::Cw4 {
@@ -346,6 +392,14 @@ impl DaoInterface<Addr> {
                 msg: to_binary(&EnterpriseExecuteMsg::Claim {})?,
                 funds: vec![],
             })),
+            DaoInterface::EnterpriseV2 {
+                membership,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: membership.to_string(),
+                msg: to_binary(&EnterpriseExecuteMsg::Claim {})?,
+                funds: vec![],
+            })),
             DaoInterface::Cw4 {
                 addr,
                 ..
@@ -376,6 +430,20 @@ impl DaoInterface<Addr> {
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
+                msg: to_binary(&EnterpriseDistributorExecuteMsg::ClaimRewards(
+                    EnterpriseClaimRewardsMsg {
+                        user: env.contract.address.to_string(),
+                        native_denoms: Some(native_denoms),
+                        cw20_assets: Some(cw20_assets),
+                    },
+                ))?,
+                funds: vec![],
+            })),
+            DaoInterface::EnterpriseV2 {
+                distributor,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: distributor.to_string(),
                 msg: to_binary(&EnterpriseDistributorExecuteMsg::ClaimRewards(
                     EnterpriseClaimRewardsMsg {
                         user: env.contract.address.to_string(),
@@ -419,6 +487,8 @@ impl DaoInterface<Addr> {
         &self,
         proposal_id: u64,
         outcome: VoteOption,
+        _voter: Addr,
+        _amount: Uint128,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         match &self {
             DaoInterface::Enterprise {
@@ -426,6 +496,22 @@ impl DaoInterface<Addr> {
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: addr.to_string(),
+                msg: to_binary(&EnterpriseExecuteMsg::CastVote(CastVoteMsg {
+                    proposal_id,
+                    outcome: match outcome {
+                        VoteOption::Yes => VoteOutcome::Yes,
+                        VoteOption::No => VoteOutcome::No,
+                        VoteOption::Abstain => VoteOutcome::Abstain,
+                        VoteOption::NoWithVeto => VoteOutcome::Veto,
+                    },
+                }))?,
+                funds: vec![],
+            })),
+            DaoInterface::EnterpriseV2 {
+                gov,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: gov.to_string(),
                 msg: to_binary(&EnterpriseExecuteMsg::CastVote(CastVoteMsg {
                     proposal_id,
                     outcome: match outcome {
@@ -493,6 +579,29 @@ impl DaoInterface<Addr> {
             } => {
                 let result: EnterpriseProposalResponse = querier.query_wasm_smart(
                     addr,
+                    &EnterpriseQueryMsg::Proposal(ProposalParams {
+                        proposal_id,
+                    }),
+                )?;
+
+                Ok(ProposalResponse {
+                    end_time_s: match result.proposal.expires {
+                        Expiration::AtHeight(_) => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                        Expiration::AtTime(time) => Ok(time.seconds()),
+                        Expiration::Never {} => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                    }?,
+                })
+            },
+            DaoInterface::EnterpriseV2 {
+                gov,
+                ..
+            } => {
+                let result: EnterpriseProposalResponse = querier.query_wasm_smart(
+                    gov,
                     &EnterpriseQueryMsg::Proposal(ProposalParams {
                         proposal_id,
                     }),
