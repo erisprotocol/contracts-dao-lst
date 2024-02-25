@@ -1,10 +1,10 @@
 [workspace]
 members = [
-    "contracts/amp-governance/*",
-    "contracts/proxies/*",
+    # "contracts/amp-governance/*",
+    # "contracts/proxies/*",
     "contracts/dao-lst",
-    "contracts/alliance-hub-lst",
-    "contracts/lst-factory",
+    # "contracts/alliance-hub-lst",
+    # "contracts/lst-factory",
     "packages/*",
 ]
 # Needs to be excluded for release builds

@@ -118,7 +118,10 @@ fn bonding() {
     let mut index = 0;
     assert_eq!(
         res.messages[index].msg,
-        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(1000000)).unwrap()
+        stake
+            .dao_interface
+            .deposit_msg(&stake.utoken, Uint128::new(1000000), MOCK_CONTRACT_ADDR.to_string())
+            .unwrap()
     );
 
     index += 1;
@@ -161,7 +164,10 @@ fn bonding() {
     let mut index = 0;
     assert_eq!(
         res.messages[index].msg,
-        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(12345)).unwrap()
+        stake
+            .dao_interface
+            .deposit_msg(&stake.utoken, Uint128::new(12345), MOCK_CONTRACT_ADDR.to_string())
+            .unwrap()
     );
 
     index += 1;
@@ -214,7 +220,10 @@ fn donating() {
     let mut index = 0;
     assert_eq!(
         res.messages[index].msg,
-        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(1000000)).unwrap()
+        stake
+            .dao_interface
+            .deposit_msg(&stake.utoken, Uint128::new(1000000), MOCK_CONTRACT_ADDR.to_string())
+            .unwrap()
     );
 
     index += 1;
@@ -289,7 +298,10 @@ fn donating() {
     assert_eq!(res.messages.len(), 1);
     assert_eq!(
         res.messages[0].msg,
-        stake.dao_interface.deposit_msg(&stake.utoken, Uint128::new(12345)).unwrap()
+        stake
+            .dao_interface
+            .deposit_msg(&stake.utoken, Uint128::new(12345), MOCK_CONTRACT_ADDR.to_string())
+            .unwrap()
     );
 
     deps.querier.set_bank_balances(&[coin(0, MOCK_UTOKEN)]);
@@ -504,7 +516,10 @@ fn reinvesting() {
 
     assert_eq!(
         res.messages[0].msg,
-        stake.dao_interface.deposit_msg(&stake.utoken, delegated).unwrap()
+        stake
+            .dao_interface
+            .deposit_msg(&stake.utoken, delegated, MOCK_CONTRACT_ADDR.to_string())
+            .unwrap()
     );
     assert_eq!(
         res.messages[1].msg.without_generic(),

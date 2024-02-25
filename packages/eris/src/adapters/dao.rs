@@ -18,6 +18,14 @@ pub enum EnterpriseCw20HookMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+pub enum EnterpriseV2Cw20HookMsg {
+    Stake {
+        user: String,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum EnterpriseExecuteMsg {
     CastVote(CastVoteMsg),
     Unstake(EnterpriseUnstakeMsg),
@@ -224,6 +232,7 @@ impl DaoInterface<Addr> {
         &self,
         utoken: &AssetInfo,
         amount: Uint128,
+        eris_contract_addr: String,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         match utoken {
             AssetInfo::Token {
@@ -249,7 +258,9 @@ impl DaoInterface<Addr> {
                     msg: to_binary(&Cw20ExecuteMsg::Send {
                         contract: membership.to_string(),
                         amount,
-                        msg: to_binary(&EnterpriseCw20HookMsg::Stake {})?,
+                        msg: to_binary(&EnterpriseV2Cw20HookMsg::Stake {
+                            user: eris_contract_addr,
+                        })?,
                     })?,
                     funds: vec![],
                 })),

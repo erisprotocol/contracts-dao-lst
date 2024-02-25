@@ -123,7 +123,11 @@ pub fn bond(
     state.stake_token.save(deps.storage, &stake)?;
 
     Ok(Response::new()
-        .add_message(stake.dao_interface.deposit_msg(&stake.utoken, token_to_bond)?)
+        .add_message(stake.dao_interface.deposit_msg(
+            &stake.utoken,
+            token_to_bond,
+            env.contract.address.to_string(),
+        )?)
         .add_optional_messages(mint_msgs)
         .add_event(event)
         .add_attribute("action", "erishub/bond"))
@@ -429,7 +433,11 @@ pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
                 .add_attribute("utoken_bonded", to_bond)
                 .add_attribute("utoken_protocol_fee", protocol_fee);
 
-            msgs.push(stake.dao_interface.deposit_msg(&stake.utoken, to_bond)?);
+            msgs.push(stake.dao_interface.deposit_msg(
+                &stake.utoken,
+                to_bond,
+                env.contract.address.to_string(),
+            )?);
             true
         } else if asset.info == stake_token_denom_native {
             // if receiving ustake (staked utoken) -> burn
