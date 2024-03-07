@@ -26,8 +26,8 @@ impl Assets {
     pub fn find(&self, info: &AssetInfo) -> Asset {
         self.0
             .iter()
+            .find(|&coin| coin.info == *info)
             .cloned()
-            .find(|coin| coin.info == *info)
             .unwrap_or_else(|| info.with_balance(0u128))
     }
 }

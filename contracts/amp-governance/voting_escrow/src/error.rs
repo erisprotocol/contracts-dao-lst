@@ -38,6 +38,9 @@ pub enum ContractError {
     #[error("Lock period must be 3 or more weeks")]
     LockPeriodsError {},
 
+    #[error("Locks decommissioned, cannot extend or create new ones.")]
+    DecommissionedError {},
+
     #[error("The lock time has not yet expired")]
     LockHasNotExpired {},
 
