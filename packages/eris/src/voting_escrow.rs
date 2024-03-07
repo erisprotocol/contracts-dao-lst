@@ -98,6 +98,7 @@ pub enum ExecuteMsg {
     UpdateConfig {
         new_guardian: Option<String>,
         push_update_contracts: Option<Vec<String>>,
+        decommissioned: Option<bool>,
     },
     /// Set whitelisted logo urls
     SetLogoUrlsWhitelist {
@@ -252,6 +253,8 @@ pub struct ConfigResponse {
     pub logo_urls_whitelist: Vec<String>,
     /// The list of contracts to receive push updates
     pub push_update_contracts: Vec<String>,
+    /// specifies if the voting escrow is decommissioned
+    pub decommissioned: bool,
 }
 
 /// This structure describes a Migration message.

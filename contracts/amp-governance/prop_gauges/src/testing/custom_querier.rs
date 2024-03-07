@@ -9,9 +9,7 @@ use cosmwasm_std::{
     QueryRequest, SystemError, Timestamp, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
-use eris::adapters::dao::{
-    Cw3ProposalResponse, EnterprisePollResponse, EnterpriseProposalResponse,
-};
+use eris::adapters::dao::{Cw3ProposalResponse, EnterpriseProposalResponse};
 use eris::voting_escrow::{LockInfoResponse, VotingPowerResponse};
 
 use super::cw20_querier::Cw20Querier;
@@ -156,17 +154,23 @@ impl CustomQuerier {
                                 None => err_unsupported_query(msg),
                             }
                         },
-                        eris::adapters::dao::EnterpriseQueryMsg::Poll(params) => {
-                            match self.prop_map.get(&params.poll_id) {
-                                Some(val) => self.to_result(EnterprisePollResponse {
-                                    poll: eris::adapters::dao::Poll {
-                                        id: params.poll_id,
-                                        ends_at: Timestamp::from_seconds(*val),
-                                    },
-                                }),
-                                None => err_unsupported_query(msg),
-                            }
-                        },
+                        // eris::adapters::dao::EnterpriseQueryMsg::Proposal(params) => {
+                        //     match self.prop_map.get(&params.proposal_id) {
+                        //         Some(val) => self.to_result(EnterpriseProposalResponse {
+                        //             // poll: eris::adapters::dao::Proposal {
+                        //             //     id: params.proposal_id,
+                        //             //     ends_at: Timestamp::from_seconds(*val),
+                        //             // },
+                        //             proposal: eris::adapters::dao::Proposal {
+                        //                 id: params.proposal_id,
+                        //                 expires: cw20::Expiration::AtTime(Timestamp::from_seconds(
+                        //                     *val,
+                        //                 )),
+                        //             },
+                        //         }),
+                        //         None => err_unsupported_query(msg),
+                        //     }
+                        // },
                     };
                 }
 
