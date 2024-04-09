@@ -628,8 +628,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-alliance-hub-lst-whitewhale"
-version = "1.2.3"
+name = "eris-alliance-hub-lst-terra"
+version = "1.2.4"
 dependencies = [
  "alliance-protocol",
  "astroport",

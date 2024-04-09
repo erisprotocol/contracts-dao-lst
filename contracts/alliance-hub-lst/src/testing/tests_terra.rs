@@ -90,7 +90,10 @@ fn harvesting_with_balance() {
         res.messages[3],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
+            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
+                skip_fee: false
+            }))
+            .unwrap(),
             funds: vec![]
         }))
     );

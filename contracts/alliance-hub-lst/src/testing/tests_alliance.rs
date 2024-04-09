@@ -498,7 +498,10 @@ fn harvesting() {
         res.messages[2],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
+            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
+                skip_fee: false
+            }))
+            .unwrap(),
             funds: vec![]
         }))
     );
@@ -538,7 +541,10 @@ fn harvesting_with_balance() {
         res.messages[2],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
+            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
+                skip_fee: false
+            }))
+            .unwrap(),
             funds: vec![]
         }))
     );
@@ -647,7 +653,9 @@ fn reinvesting() {
         deps.as_mut(),
         mock_env(),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
-        ExecuteMsg::Callback(CallbackMsg::Reinvest {}),
+        ExecuteMsg::Callback(CallbackMsg::Reinvest {
+            skip_fee: false,
+        }),
     )
     .unwrap();
 

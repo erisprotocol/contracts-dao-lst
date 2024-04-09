@@ -14,7 +14,8 @@ use crate::hub::DaoInterface;
 // DenomType = Chain specific denom
 // Option<Decimal> = Price
 // Option<Uint128> = max amount, 0 = unlimited
-pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>);
+// Option<bool> = pay fee, 0 = no fee
+pub type SingleSwapConfig = (StageType, DenomType, Option<Decimal>, Option<Uint128>, Option<bool>);
 
 pub type MultiSwapRouter = (MultiSwapRouterType, Vec<DenomType>);
 
@@ -124,12 +125,15 @@ pub enum CallbackMsg {
     SingleStageSwap {
         // (Used dex, used denom, belief_price)
         stage: Vec<SingleSwapConfig>,
+        index: usize,
     },
     MultiSwapRouter {
         router: MultiSwapRouter,
     },
     /// Following the swaps, stake the Token acquired to the whitelisted validators
-    Reinvest {},
+    Reinvest {
+        skip_fee: bool,
+    },
 
     AssertBalance {
         expected: Asset,

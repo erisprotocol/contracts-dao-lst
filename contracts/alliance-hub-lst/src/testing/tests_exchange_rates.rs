@@ -37,7 +37,9 @@ fn reinvesting_check_exchange_rates() {
         deps.as_mut(),
         mock_env_at_timestamp(0),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
-        ExecuteMsg::Callback(CallbackMsg::Reinvest {}),
+        ExecuteMsg::Callback(CallbackMsg::Reinvest {
+            skip_fee: false,
+        }),
     )
     .unwrap();
     assert_eq!(res.messages.len(), 4);
@@ -78,7 +80,9 @@ fn reinvesting_check_exchange_rates() {
         deps.as_mut(),
         mock_env_at_timestamp(DAY),
         mock_info(MOCK_CONTRACT_ADDR, &[]),
-        ExecuteMsg::Callback(CallbackMsg::Reinvest {}),
+        ExecuteMsg::Callback(CallbackMsg::Reinvest {
+            skip_fee: false,
+        }),
     )
     .unwrap();
     assert_eq!(res.messages.len(), 4);
