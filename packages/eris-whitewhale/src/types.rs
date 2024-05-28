@@ -22,6 +22,9 @@ pub enum StageType {
     Dex {
         addr: Addr,
     },
+    Burn {
+        addr: Addr,
+    },
 }
 
 impl StageType {
@@ -42,5 +45,22 @@ pub fn get_asset(info: DenomType, amount: Uint128) -> CoinType {
     Asset {
         info,
         amount,
+    }
+}
+
+pub trait AssetInfoExt {
+    /// simplifies converting an AssetInfo to an Asset with balance
+    fn with_balance(&self, balance: Uint128) -> Asset;
+}
+
+impl AssetInfoExt for AssetInfo {
+    fn with_balance(&self, amount: Uint128) -> Asset {
+        match self {
+            cw_asset::AssetInfoBase::Native(denom) => Asset::native(denom, amount),
+            cw_asset::AssetInfoBase::Cw20(contract_addr) => {
+                Asset::cw20(contract_addr.clone(), amount)
+            },
+            _ => todo!(),
+        }
     }
 }

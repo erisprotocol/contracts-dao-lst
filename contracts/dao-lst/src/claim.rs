@@ -1,6 +1,7 @@
+use astroport::asset::{AssetInfo, AssetInfoExt};
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg};
-use eris::hub::ClaimType;
+use eris::{adapters::asset::AssetEx, hub::ClaimType};
 use eris_chain_adapter::types::{CustomMsgType, CustomQueryType};
 
 use crate::{
@@ -23,9 +24,26 @@ impl ClaimExecuteMsg {
     }
 }
 
+#[cw_serde]
+pub enum ClaimExecuteGenieMsg {
+    Claim {
+        payload: String,
+    },
+}
+
+impl ClaimExecuteGenieMsg {
+    pub fn into_msg(&self, contract_addr: String) -> StdResult<CosmosMsg<CustomMsgType>> {
+        Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr,
+            msg: to_binary(&self)?,
+            funds: vec![],
+        }))
+    }
+}
+
 pub fn exec_claim(
     deps: DepsMut<CustomQueryType>,
-    _env: Env,
+    env: Env,
     info: MessageInfo,
     claims: Vec<ClaimType>,
 ) -> ContractResult {
@@ -44,9 +62,38 @@ pub fn exec_claim(
                     deps.api.addr_validate(&contract_addr)?;
                     ClaimExecuteMsg::Claim {}.into_msg(contract_addr)?
                 },
+                ClaimType::Genie {
+                    contract,
+                    payload,
+                } => {
+                    deps.api.addr_validate(&contract)?;
+                    ClaimExecuteGenieMsg::Claim {
+                        payload,
+                    }
+                    .into_msg(contract)?
+                },
+                ClaimType::Transfer {
+                    token,
+                    recipient,
+                } => {
+                    let stake = state.stake_token.load(deps.storage)?;
+
+                    let stake_denom = AssetInfo::NativeToken {
+                        denom: stake.denom,
+                    };
+
+                    if stake.utoken == token || stake_denom == token {
+                        return Err(ContractError::SwapFromNotAllowed(token.to_string()));
+                    }
+
+                    let balance = token.query_pool(&deps.querier, env.contract.address.clone())?;
+                    let recipient = deps.api.addr_validate(&recipient)?;
+
+                    token.with_balance(balance).transfer_msg(&recipient)?
+                },
             })
         })
-        .collect::<StdResult<Vec<CosmosMsg<CustomMsgType>>>>()?;
+        .collect::<Result<Vec<CosmosMsg<CustomMsgType>>, ContractError>>()?;
 
     Ok(Response::new().add_messages(claim_msgs).add_attribute("action", "erishub/exec_claim"))
 }

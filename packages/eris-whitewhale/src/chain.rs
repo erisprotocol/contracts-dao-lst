@@ -4,7 +4,7 @@ use cw_asset::Asset;
 use eris_chain_shared::chain_trait::ChainInterface;
 
 use crate::{
-    adapters::whitewhaledex::WhiteWhalePair,
+    adapters::{furnace::Furnace, whitewhaledex::WhiteWhalePair},
     denom::{MsgBurn, MsgCreateDenom, MsgMint},
     types::{CoinType, CustomMsgType, DenomType, StageType, WithdrawType},
 };
@@ -76,6 +76,9 @@ impl ChainInterface<CustomMsgType, DenomType, CoinType, WithdrawType, StageType,
             StageType::Dex {
                 addr,
             } => WhiteWhalePair(addr).swap_msg(denom, amount, belief_price, Some(max_spread)),
+            StageType::Burn {
+                addr,
+            } => Furnace(addr).burn_msg(denom, amount),
         }
     }
 

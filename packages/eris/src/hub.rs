@@ -467,6 +467,14 @@ pub struct ExchangeRatesResponse {
 #[cw_serde]
 pub enum ClaimType {
     Default(String),
+    Genie {
+        contract: String,
+        payload: String,
+    },
+    Transfer {
+        token: AssetInfo,
+        recipient: String,
+    },
 }
 
 pub type MigrateMsg = Empty;

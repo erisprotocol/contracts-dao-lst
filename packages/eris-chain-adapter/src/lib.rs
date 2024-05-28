@@ -67,12 +67,11 @@ pub mod types {
     use eris_chain_shared::chain_trait::ChainInterface;
 
     pub use eris_whitewhale::types::get_asset;
+    pub use eris_whitewhale::types::AssetInfoExt;
     pub use eris_whitewhale::types::CoinType;
     pub use eris_whitewhale::types::CustomMsgType;
     pub use eris_whitewhale::types::CustomQueryType;
     pub use eris_whitewhale::types::DenomType;
-    // pub use eris_whitewhale::types::MantaMsg;
-    // pub use eris_whitewhale::types::MantaSwap;
     pub use eris_whitewhale::types::MultiSwapRouterType;
     pub use eris_whitewhale::types::StageType;
     pub use eris_whitewhale::types::WithdrawType;
@@ -138,6 +137,8 @@ pub mod types {
     pub use eris_terra::types::MultiSwapRouterType;
     pub use eris_terra::types::StageType;
     pub use eris_terra::types::WithdrawType;
+
+    pub use astroport::asset::AssetInfoExt;
 
     pub const CHAIN_TYPE: &str = "terra";
 

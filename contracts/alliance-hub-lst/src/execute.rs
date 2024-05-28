@@ -1,29 +1,25 @@
-use std::cmp;
-
-use astroport::asset::{native_asset, native_asset_info, Asset, AssetInfoExt};
-use cosmwasm_std::{
-    attr, Addr, Attribute, CosmosMsg, Decimal, DepsMut, Env, Event, Response, StdResult, Uint128,
-};
-use cw2::set_contract_version;
-use eris::adapters::asset::AssetEx;
-use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
-
-use eris::hub_alliance::{
-    CallbackMsg, FeeConfig, InstantiateMsg, MultiSwapRouter, SingleSwapConfig, StakeToken,
-};
-use eris_chain_adapter::types::{
-    chain, get_balances_hashmap, CoinType, CustomMsgType, CustomQueryType, DenomType, WithdrawType,
-};
-use itertools::Itertools;
-
 use crate::constants::get_reward_fee_cap;
 use crate::error::{ContractError, ContractResult};
-
 use crate::math::{compute_mint_amount, compute_unbond_amount};
 use crate::state::State;
 use crate::types::Assets;
-
+use astroport::asset::{native_asset, native_asset_info, Asset, AssetInfoExt};
+use cosmwasm_std::{
+    attr, Addr, Attribute, CosmosMsg, Decimal, DepsMut, Env, Event, Response, StdError, StdResult,
+    Uint128,
+};
+use cw2::set_contract_version;
+use eris::adapters::asset::AssetEx;
+use eris::hub_alliance::{
+    CallbackMsg, FeeConfig, InstantiateMsg, MultiSwapRouter, SingleSwapConfig, StakeToken,
+};
+use eris::{CustomEvent, CustomResponse, DecimalCheckedOps};
+use eris_chain_adapter::types::{
+    chain, get_balances_hashmap, CoinType, CustomMsgType, CustomQueryType, DenomType, WithdrawType,
+};
 use eris_chain_shared::chain_trait::ChainInterface;
+use itertools::Itertools;
+use std::cmp;
 
 const CONTRACT_NAME: &str = "eris-alliance-hub-lst";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -277,9 +273,11 @@ pub fn single_stage_swap(
                         fee_config.protocol_reward_fee.checked_mul_uint(available)?;
                     available = available.saturating_sub(protocol_fee);
 
-                    let send_fee = denom
-                        .with_balance(protocol_fee)
-                        .transfer_msg(&fee_config.protocol_fee_contract)?;
+                    let send_fee =
+                        eris_chain_adapter::types::AssetInfoExt::with_balance(&denom, protocol_fee)
+                            .transfer_msg(&fee_config.protocol_fee_contract)
+                            .map_err(|e| StdError::generic_err(e.to_string()))?;
+
                     response = response.add_message(send_fee)
                 }
 
