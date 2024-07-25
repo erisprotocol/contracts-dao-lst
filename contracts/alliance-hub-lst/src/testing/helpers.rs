@@ -1,7 +1,7 @@
 use astroport::asset::{native_asset_info, Asset, AssetInfo, AssetInfoExt};
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Decimal, Deps, Env,
+    from_json, to_json_binary, Addr, BlockInfo, ContractInfo, CosmosMsg, Decimal, Deps, Env,
     OwnedDeps, QuerierResult, StdResult, SubMsg, SystemError, SystemResult, Timestamp, Uint128,
     WasmMsg,
 };
@@ -53,7 +53,7 @@ pub(super) fn mock_env_at_timestamp(timestamp: u64) -> Env {
 }
 
 pub(super) fn query_helper<T: DeserializeOwned>(deps: Deps<CustomQueryType>, msg: QueryMsg) -> T {
-    from_binary(&query(deps, mock_env(), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env(), msg).unwrap()).unwrap()
 }
 
 pub(super) fn query_helper_env<T: DeserializeOwned>(
@@ -61,7 +61,7 @@ pub(super) fn query_helper_env<T: DeserializeOwned>(
     msg: QueryMsg,
     timestamp: u64,
 ) -> T {
-    from_binary(&query(deps, mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
+    from_json(query(deps, mock_env_at_timestamp(timestamp), msg).unwrap()).unwrap()
 }
 
 pub(super) fn get_stake_full_denom() -> String {
@@ -86,7 +86,7 @@ pub(super) fn set_total_stake_supply(
 pub fn check_received_coin(amount: u128, amount_stake: u128) -> SubMsg<CustomMsgType> {
     SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-        msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
+        msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::CheckReceivedCoin {
             snapshot: mock_utoken_amount(amount),
             snapshot_stake: native_asset_info(get_stake_full_denom()).with_balance(amount_stake),
         }))

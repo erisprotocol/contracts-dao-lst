@@ -1,6 +1,6 @@
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
-    coin, to_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, VoteOption, WasmMsg,
+    coin, to_json_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, VoteOption, WasmMsg,
 };
 use eris_chain_adapter::types::CustomMsgType;
 
@@ -18,7 +18,7 @@ impl Hub {
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
-            msg: to_binary(&ExecuteMsg::Bond {
+            msg: to_json_binary(&ExecuteMsg::Bond {
                 receiver,
                 donate: None,
             })?,
@@ -33,7 +33,7 @@ impl Hub {
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
-            msg: to_binary(&ExecuteMsg::Vote {
+            msg: to_json_binary(&ExecuteMsg::Vote {
                 proposal_id,
                 vote,
             })?,

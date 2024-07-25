@@ -20,6 +20,7 @@ pub mod types {
     pub use eris_kujira::types::MultiSwapRouterType;
     pub use eris_kujira::types::StageType;
     pub use eris_kujira::types::WithdrawType;
+    pub use eris_kujira::types::AssetInfoExt;
 
     pub const CHAIN_TYPE: &str = "kujira";
 

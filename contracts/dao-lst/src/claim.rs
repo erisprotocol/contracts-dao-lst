@@ -1,6 +1,8 @@
 use astroport::asset::{AssetInfo, AssetInfoExt};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{to_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg};
+use cosmwasm_std::{
+    to_json_binary, CosmosMsg, DepsMut, Env, MessageInfo, Response, StdResult, WasmMsg,
+};
 use eris::{adapters::asset::AssetEx, hub::ClaimType};
 use eris_chain_adapter::types::{CustomMsgType, CustomQueryType};
 
@@ -18,7 +20,7 @@ impl ClaimExecuteMsg {
     pub fn into_msg(&self, contract_addr: String) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
-            msg: to_binary(&self)?,
+            msg: to_json_binary(&self)?,
             funds: vec![],
         }))
     }
@@ -35,7 +37,7 @@ impl ClaimExecuteGenieMsg {
     pub fn into_msg(&self, contract_addr: String) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
-            msg: to_binary(&self)?,
+            msg: to_json_binary(&self)?,
             funds: vec![],
         }))
     }

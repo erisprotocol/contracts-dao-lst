@@ -1,6 +1,6 @@
 use astroport::asset::AssetInfoExt;
 use cosmwasm_std::{
-    coins, to_binary, Addr, Coin, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
+    coins, to_json_binary, Addr, Coin, CosmosMsg, Decimal, StdError, StdResult, Uint128, WasmMsg,
 };
 use eris_chain_shared::chain_trait::ChainInterface;
 
@@ -94,7 +94,7 @@ impl
                 } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                     contract_addr: addr.to_string(),
                     funds: coins(amount.u128(), denom),
-                    msg: to_binary(&msg)?,
+                    msg: to_json_binary(&msg)?,
                 })),
             },
         }
@@ -115,7 +115,7 @@ impl
             } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: addr.to_string(),
                 funds,
-                msg: to_binary(&msg)?,
+                msg: to_json_binary(&msg)?,
             })]),
         }
     }

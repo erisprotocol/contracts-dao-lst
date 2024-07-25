@@ -1,4 +1,4 @@
-use cosmwasm_std::{coin, to_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{coin, to_json_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use eris_chain_shared::chain_trait::ChainInterface;
 use kujira::msg::DenomMsg;
 
@@ -89,7 +89,7 @@ impl
             } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: addr.to_string(),
                 funds,
-                msg: to_binary(&msg)?,
+                msg: to_json_binary(&msg)?,
             })]),
         }
     }

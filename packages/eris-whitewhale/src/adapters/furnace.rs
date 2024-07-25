@@ -1,6 +1,6 @@
 use crate::types::{CustomMsgType, DenomType};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{coins, to_binary, Addr, CosmosMsg, StdError, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{coins, to_json_binary, Addr, CosmosMsg, StdError, StdResult, Uint128, WasmMsg};
 
 #[cw_serde]
 pub enum ExecuteMsg {
@@ -20,7 +20,7 @@ impl Furnace {
             cw_asset::AssetInfoBase::Native(native) => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
                 funds: coins(amount.u128(), native.clone()),
-                msg: to_binary(&ExecuteMsg::Burn {})?,
+                msg: to_json_binary(&ExecuteMsg::Burn {})?,
             })),
             _ => Err(StdError::generic_err("Furnace.burn_msg: not supported")),
         }

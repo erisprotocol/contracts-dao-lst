@@ -1,6 +1,6 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{coin, to_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, WasmMsg};
+use cosmwasm_std::{coin, to_json_binary, Addr, CosmosMsg, QuerierWrapper, StdResult, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 use eris_chain_adapter::types::CustomMsgType;
 
@@ -22,10 +22,10 @@ impl AllianceHub {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount: asset.amount,
-                    msg: to_binary(&ExecuteMsg::Bond {
+                    msg: to_json_binary(&ExecuteMsg::Bond {
                         receiver,
                         donate,
                     })?,
@@ -35,7 +35,7 @@ impl AllianceHub {
                 denom,
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
-                msg: to_binary(&ExecuteMsg::Bond {
+                msg: to_json_binary(&ExecuteMsg::Bond {
                     receiver,
                     donate,
                 })?,
@@ -52,7 +52,7 @@ impl AllianceHub {
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.0.to_string(),
-            msg: to_binary(&ExecuteMsg::Unbond {
+            msg: to_json_binary(&ExecuteMsg::Unbond {
                 receiver,
             })?,
             funds: vec![coin(amount, denom)],

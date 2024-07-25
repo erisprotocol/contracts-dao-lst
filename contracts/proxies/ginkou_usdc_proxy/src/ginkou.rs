@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{coin, to_binary, Addr, CosmosMsg, Uint128, WasmMsg};
+use cosmwasm_std::{coin, to_json_binary, Addr, CosmosMsg, Uint128, WasmMsg};
 use cw20::Cw20ExecuteMsg;
 
 use crate::error::CustomResult;
@@ -22,7 +22,7 @@ impl Ginkou {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.contract.to_string(),
             funds: vec![coin(amount, self.usdc_denom.clone())],
-            msg: to_binary(&GinkouExecuteMsg::DepositStable {})?,
+            msg: to_json_binary(&GinkouExecuteMsg::DepositStable {})?,
         }))
     }
 
@@ -30,10 +30,10 @@ impl Ginkou {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: self.musdc_addr.to_string(),
             funds: vec![],
-            msg: to_binary(&Cw20ExecuteMsg::Send {
+            msg: to_json_binary(&Cw20ExecuteMsg::Send {
                 contract: self.contract.to_string(),
                 amount,
-                msg: to_binary(&GinkouExecuteMsg::RedeemStable {})?,
+                msg: to_json_binary(&GinkouExecuteMsg::RedeemStable {})?,
             })?,
         }))
     }

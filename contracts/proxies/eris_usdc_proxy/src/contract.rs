@@ -12,7 +12,7 @@ use astroport::asset::{native_asset_info, token_asset_info, AssetInfoExt, PairIn
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Storage,
+    to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response, StdResult, Storage,
 };
 use cw2::set_contract_version;
 use eris::{adapters::alliancehub::AllianceHub, helper::validate_received_funds, CustomMsgExt2};
@@ -197,8 +197,8 @@ fn callback(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&get_config(deps.storage)?),
-        QueryMsg::Pair {} => to_binary(&query_pair(deps, env)?),
+        QueryMsg::Config {} => to_json_binary(&get_config(deps.storage)?),
+        QueryMsg::Pair {} => to_json_binary(&query_pair(deps, env)?),
     }
 }
 

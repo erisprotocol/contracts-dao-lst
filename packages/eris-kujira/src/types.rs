@@ -1,5 +1,6 @@
+use astroport::asset::Asset;
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{Addr, Api, Coin, Empty, StdResult};
+use cosmwasm_std::{Addr, Api, Coin, Empty, StdResult, Uint128};
 use eris_chain_shared::chain_trait::Validateable;
 use kujira::{denom::Denom, msg::KujiraMsg};
 
@@ -77,3 +78,19 @@ impl Validateable<HubChainConfig> for HubChainConfigInput {
 
 #[cw_serde]
 pub struct HubChainConfig {}
+
+pub trait AssetInfoExt {
+    /// simplifies converting an AssetInfo to an Asset with balance
+    fn with_balance(&self, balance: Uint128) -> Asset;
+}
+
+impl AssetInfoExt for Denom {
+    fn with_balance(&self, amount: Uint128) -> Asset {
+        Asset {
+            amount,
+            info: astroport::asset::AssetInfo::NativeToken {
+                denom: self.to_string(),
+            },
+        }
+    }
+}

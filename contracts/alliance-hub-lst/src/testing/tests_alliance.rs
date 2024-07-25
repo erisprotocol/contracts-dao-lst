@@ -1,8 +1,8 @@
 use astroport::asset::{native_asset, native_asset_info, AssetInfoExt};
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, to_binary, Addr, Coin, CosmosMsg, Decimal, Event, StdError, StdResult, SubMsg, Uint128,
-    WasmMsg,
+    coin, to_json_binary, Addr, Coin, CosmosMsg, Decimal, Event, StdError, StdResult, SubMsg,
+    Uint128, WasmMsg,
 };
 use eris::DecimalCheckedOps;
 
@@ -498,7 +498,7 @@ fn harvesting() {
         res.messages[2],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
                 skip_fee: false
             }))
             .unwrap(),
@@ -541,7 +541,7 @@ fn harvesting_with_balance() {
         res.messages[2],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {
                 skip_fee: false
             }))
             .unwrap(),

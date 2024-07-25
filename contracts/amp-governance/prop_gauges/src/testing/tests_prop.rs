@@ -2,7 +2,7 @@ use std::vec;
 
 use cosmwasm_std::testing::{mock_env, mock_info, MockApi, MockStorage};
 use cosmwasm_std::{
-    to_binary, Addr, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, VoteOption, WasmMsg,
+    to_json_binary, Addr, CosmosMsg, Decimal, OwnedDeps, SubMsg, Uint128, VoteOption, WasmMsg,
 };
 
 use eris::governance_helper::{get_period, EPOCH_START, WEEK};
@@ -112,7 +112,7 @@ fn check_init_prop() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hub".to_string(),
-            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+            msg: to_json_binary(&eris::hub::ExecuteMsg::Vote {
                 proposal_id: 1,
                 vote: cosmwasm_std::VoteOption::Abstain
             })
@@ -295,7 +295,7 @@ fn vote_prop() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hub".to_string(),
-            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+            msg: to_json_binary(&eris::hub::ExecuteMsg::Vote {
                 proposal_id: 3,
                 vote: cosmwasm_std::VoteOption::No
             })
@@ -348,7 +348,7 @@ fn vote_prop() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hub".to_string(),
-            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+            msg: to_json_binary(&eris::hub::ExecuteMsg::Vote {
                 proposal_id: 3,
                 vote: cosmwasm_std::VoteOption::Yes
             })
@@ -518,7 +518,7 @@ fn remove_user() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hub".to_string(),
-            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+            msg: to_json_binary(&eris::hub::ExecuteMsg::Vote {
                 proposal_id: 2,
                 vote: cosmwasm_std::VoteOption::Abstain
             })
@@ -530,7 +530,7 @@ fn remove_user() {
         res.messages[1],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hub".to_string(),
-            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+            msg: to_json_binary(&eris::hub::ExecuteMsg::Vote {
                 proposal_id: 3,
                 vote: cosmwasm_std::VoteOption::Abstain
             })
@@ -943,7 +943,7 @@ fn update_vote() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "hub".to_string(),
-            msg: to_binary(&eris::hub::ExecuteMsg::Vote {
+            msg: to_json_binary(&eris::hub::ExecuteMsg::Vote {
                 proposal_id: 3,
                 vote: cosmwasm_std::VoteOption::Yes
             })

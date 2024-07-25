@@ -6,8 +6,8 @@ module.exports = {
       default: "bash build_release.sh",
     },
     schema: {
-      // default: "nps schema.create schema.transform schema.hub",
-      default: "nps schema.hub",
+      default: "nps schema.create schema.transform schema.hub",
+      // default: "nps schema.create schema.hub",
 
       transform: "ts-node transform.ts",
 

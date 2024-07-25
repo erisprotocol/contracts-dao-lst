@@ -5,8 +5,8 @@ use astroport::asset::native_asset_info;
 use cosmwasm_schema::serde::Serialize;
 use cosmwasm_std::testing::{BankQuerier, StakingQuerier, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    from_binary, from_slice, to_binary, Addr, Coin, Decimal, Empty, Querier, QuerierResult,
-    QueryRequest, SystemError, Timestamp, Uint128, WasmQuery,
+    from_json, to_json_binary, Addr, Coin, Decimal, Empty, Querier, QuerierResult, QueryRequest,
+    SystemError, Timestamp, Uint128, WasmQuery,
 };
 use cw20::Cw20QueryMsg;
 use eris::adapters::dao::{Cw3ProposalResponse, EnterpriseProposalResponse};
@@ -27,7 +27,7 @@ pub(super) struct CustomQuerier {
 
 impl Querier for CustomQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let request: QueryRequest<_> = match from_slice(bin_request) {
+        let request: QueryRequest<_> = match from_json(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
@@ -91,12 +91,11 @@ impl CustomQuerier {
                 contract_addr,
                 msg,
             }) => {
-                if let Ok(query) = from_binary::<Cw20QueryMsg>(msg) {
+                if let Ok(query) = from_json::<Cw20QueryMsg>(msg) {
                     return self.cw20_querier.handle_query(contract_addr, query);
                 }
 
-                if let Ok(eris::hub::QueryMsg::Config {}) = from_binary::<eris::hub::QueryMsg>(msg)
-                {
+                if let Ok(eris::hub::QueryMsg::Config {}) = from_json::<eris::hub::QueryMsg>(msg) {
                     return self.to_result(eris::hub::ConfigResponse {
                         owner: "owner".to_string(),
                         new_owner: None,
@@ -121,11 +120,11 @@ impl CustomQuerier {
                     });
                 }
 
-                if let Ok(query) = from_binary::<eris::voting_escrow::QueryMsg>(msg) {
+                if let Ok(query) = from_json::<eris::voting_escrow::QueryMsg>(msg) {
                     return self.handle_vp_query(contract_addr, query);
                 }
 
-                if let Ok(query) = from_binary::<eris::adapters::dao::Cw3QueryMsg>(msg) {
+                if let Ok(query) = from_json::<eris::adapters::dao::Cw3QueryMsg>(msg) {
                     return match query {
                         eris::adapters::dao::Cw3QueryMsg::Proposal {
                             proposal_id,
@@ -139,7 +138,7 @@ impl CustomQuerier {
                     };
                 }
 
-                if let Ok(query) = from_binary::<eris::adapters::dao::EnterpriseQueryMsg>(msg) {
+                if let Ok(query) = from_json::<eris::adapters::dao::EnterpriseQueryMsg>(msg) {
                     return match query {
                         eris::adapters::dao::EnterpriseQueryMsg::Proposal(params) => {
                             match self.prop_map.get(&params.proposal_id) {
@@ -189,7 +188,7 @@ impl CustomQuerier {
     where
         T: Serialize + Sized,
     {
-        Ok(to_binary(&val).into()).into()
+        Ok(to_json_binary(&val).into()).into()
     }
 
     fn handle_vp_query(

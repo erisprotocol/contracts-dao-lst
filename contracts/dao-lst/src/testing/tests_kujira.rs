@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{coin, coins, to_binary, Addr, CosmosMsg, SubMsg, Uint128, WasmMsg};
+use cosmwasm_std::{coin, coins, to_json_binary, Addr, CosmosMsg, SubMsg, Uint128, WasmMsg};
 use eris::hub::{CallbackMsg, ExecuteMsg};
 
 use eris_chain_adapter::types::{MantaMsg, MantaSwap, MultiSwapRouterType};
@@ -78,7 +78,7 @@ fn harvesting_with_balance() {
         res.messages[1],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::MultiSwapRouter {
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::MultiSwapRouter {
                 router: router.clone()
             }))
             .unwrap(),
@@ -91,7 +91,7 @@ fn harvesting_with_balance() {
         res.messages[3],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: MOCK_CONTRACT_ADDR.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
+            msg: to_json_binary(&ExecuteMsg::Callback(CallbackMsg::Reinvest {})).unwrap(),
             funds: vec![]
         }))
     );
@@ -111,7 +111,7 @@ fn harvesting_with_balance() {
         res.messages[0],
         SubMsg::new(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: "mantaswap".to_string(),
-            msg: to_binary(&mnta_msg).unwrap(),
+            msg: to_json_binary(&mnta_msg).unwrap(),
             funds: coins(123, "usk")
         }))
     );

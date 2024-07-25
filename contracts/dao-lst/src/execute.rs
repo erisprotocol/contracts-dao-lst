@@ -2,7 +2,7 @@ use std::cmp;
 
 use astroport::asset::{native_asset, native_asset_info, Asset, AssetInfoExt};
 use cosmwasm_std::{
-    attr, to_binary, Addr, Attribute, CosmosMsg, Decimal, DepsMut, Env, Event, Order, Response,
+    attr, to_json_binary, Addr, Attribute, CosmosMsg, Decimal, DepsMut, Env, Event, Order, Response,
     StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
@@ -654,7 +654,7 @@ pub fn queue_unbond(
         start_time = "immediate".to_string();
         msgs.push(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: env.contract.address.into(),
-            msg: to_binary(&ExecuteMsg::SubmitBatch {})?,
+            msg: to_json_binary(&ExecuteMsg::SubmitBatch {})?,
             funds: vec![],
         }));
     }

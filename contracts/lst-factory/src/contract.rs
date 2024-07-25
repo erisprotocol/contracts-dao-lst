@@ -11,7 +11,7 @@ use crate::{
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    to_binary, Binary, Deps, DepsMut, Env, Fraction, MessageInfo, Response, StdResult, Storage,
+    to_json_binary, Binary, Deps, DepsMut, Env, Fraction, MessageInfo, Response, StdResult, Storage,
     Uint128,
 };
 use cw2::set_contract_version;
@@ -143,8 +143,8 @@ fn update_config(deps: DepsMut, _env: Env, info: MessageInfo, msg: ExecuteMsg) -
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Ownership {} => to_binary(&get_ownership(deps.storage)?),
-        QueryMsg::Config {} => to_binary(&get_config(deps.storage)?),
+        QueryMsg::Ownership {} => to_json_binary(&get_ownership(deps.storage)?),
+        QueryMsg::Config {} => to_json_binary(&get_config(deps.storage)?),
     }
 }
 

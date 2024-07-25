@@ -1,7 +1,7 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{
-    to_binary, Addr, Api, CosmosMsg, Decimal, Empty, StdResult, Uint128, VoteOption, WasmMsg,
+    to_json_binary, Addr, Api, CosmosMsg, Decimal, Empty, StdResult, Uint128, VoteOption, WasmMsg,
 };
 use cw20::Cw20ReceiveMsg;
 use eris_chain_adapter::types::{
@@ -65,6 +65,14 @@ pub enum DaoInterface<T> {
         // calling claimrewards
         fund_distributor: T,
     },
+    DaoDao {
+        // calling bond, unbond, claim  (CW4)
+        staking: T,
+        // calling vote (CW3)
+        gov: T,
+        // calling claimrewards
+        cw_rewards: T,
+    },
     Alliance {
         addr: T,
     },
@@ -110,6 +118,15 @@ impl DaoInterface<String> {
                 gov,
             } => DaoInterface::Capa {
                 gov: api.addr_validate(gov)?,
+            },
+            DaoInterface::DaoDao {
+                staking: addr,
+                gov,
+                cw_rewards: fund_distributor,
+            } => DaoInterface::DaoDao {
+                staking: api.addr_validate(addr)?,
+                gov: api.addr_validate(gov)?,
+                cw_rewards: api.addr_validate(fund_distributor)?,
             },
         })
     }
@@ -238,7 +255,7 @@ impl CallbackMsg {
     pub fn into_cosmos_msg(&self, contract_addr: &Addr) -> StdResult<CosmosMsg<CustomMsgType>> {
         Ok(CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr: contract_addr.to_string(),
-            msg: to_binary(&ExecuteMsg::Callback(self.clone()))?,
+            msg: to_json_binary(&ExecuteMsg::Callback(self.clone()))?,
             funds: vec![],
         }))
     }

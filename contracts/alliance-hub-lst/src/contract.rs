@@ -1,6 +1,6 @@
 use astroport::asset::{token_asset_info, AssetInfo};
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
+    entry_point, from_json, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
     StdResult,
 };
 use cw2::set_contract_version;
@@ -166,7 +166,7 @@ pub fn execute(
 
 fn receive(deps: DepsMut, env: Env, info: MessageInfo, cw20_msg: Cw20ReceiveMsg) -> ContractResult {
     let api = deps.api;
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         ReceiveMsg::Swap {
             to,
             ..
@@ -249,13 +249,13 @@ fn callback(
 #[entry_point]
 pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&queries::config(deps)?),
-        QueryMsg::State {} => to_binary(&queries::state(deps, env)?),
+        QueryMsg::Config {} => to_json_binary(&queries::config(deps)?),
+        QueryMsg::State {} => to_json_binary(&queries::state(deps, env)?),
         QueryMsg::ExchangeRates {
             start_after,
             limit,
-        } => to_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
-        QueryMsg::Pair {} => to_binary(&queries::query_pair(deps, env)?),
+        } => to_json_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
+        QueryMsg::Pair {} => to_json_binary(&queries::query_pair(deps, env)?),
     }
 }
 

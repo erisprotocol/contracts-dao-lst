@@ -1,5 +1,5 @@
 use cosmwasm_schema::cw_serde;
-use cosmwasm_std::{coins, to_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{coins, to_json_binary, Addr, CosmosMsg, Decimal, StdResult, Uint128, WasmMsg};
 use cw20::{Cw20ExecuteMsg, Cw20ReceiveMsg};
 
 use crate::types::{CustomMsgType, DenomType};
@@ -64,10 +64,10 @@ impl WhiteWhalePair {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount,
-                    msg: to_binary(&Cw20HookMsg::Swap {
+                    msg: to_json_binary(&Cw20HookMsg::Swap {
                         belief_price,
                         max_spread,
                         to: None,
@@ -79,7 +79,7 @@ impl WhiteWhalePair {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
                 funds: coins(amount.u128(), denom.clone()),
-                msg: to_binary(&ExecuteMsg::Swap {
+                msg: to_json_binary(&ExecuteMsg::Swap {
                     offer_asset: Asset {
                         info: AssetInfo::NativeToken {
                             denom,
@@ -105,10 +105,10 @@ impl WhiteWhalePair {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: contract_addr.to_string(),
                 funds: vec![],
-                msg: to_binary(&Cw20ExecuteMsg::Send {
+                msg: to_json_binary(&Cw20ExecuteMsg::Send {
                     contract: self.0.to_string(),
                     amount,
-                    msg: to_binary(&Cw20HookMsg::WithdrawLiquidity {})?,
+                    msg: to_json_binary(&Cw20HookMsg::WithdrawLiquidity {})?,
                 })?,
             })),
             astroport::asset::AssetInfo::NativeToken {
@@ -116,7 +116,7 @@ impl WhiteWhalePair {
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: self.0.to_string(),
                 funds: coins(amount.u128(), denom),
-                msg: to_binary(&ExecuteMsg::WithdrawLiquidity {})?,
+                msg: to_json_binary(&ExecuteMsg::WithdrawLiquidity {})?,
             })),
         }
     }

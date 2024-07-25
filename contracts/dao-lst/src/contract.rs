@@ -1,7 +1,6 @@
 use astroport::asset::token_asset_info;
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, Response,
-    StdResult,
+    entry_point, from_json, to_json_binary,  Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult
 };
 use cw2::set_contract_version;
 
@@ -150,7 +149,7 @@ pub fn execute(
 
 fn receive(deps: DepsMut, env: Env, info: MessageInfo, cw20_msg: Cw20ReceiveMsg) -> ContractResult {
     let api = deps.api;
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         ReceiveMsg::Bond {
             receiver,
             donate,
@@ -209,30 +208,30 @@ fn callback(
 #[entry_point]
 pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&queries::config(deps)?),
-        QueryMsg::State {} => to_binary(&queries::state(deps, env)?),
-        QueryMsg::PendingBatch {} => to_binary(&queries::pending_batch(deps)?),
-        QueryMsg::PreviousBatch(id) => to_binary(&queries::previous_batch(deps, id)?),
+        QueryMsg::Config {} => to_json_binary(&queries::config(deps)?),
+        QueryMsg::State {} => to_json_binary(&queries::state(deps, env)?),
+        QueryMsg::PendingBatch {} => to_json_binary(&queries::pending_batch(deps)?),
+        QueryMsg::PreviousBatch(id) => to_json_binary(&queries::previous_batch(deps, id)?),
         QueryMsg::PreviousBatches {
             start_after,
             limit,
-        } => to_binary(&queries::previous_batches(deps, start_after, limit)?),
+        } => to_json_binary(&queries::previous_batches(deps, start_after, limit)?),
         QueryMsg::UnbondRequestsByBatch {
             id,
             start_after,
             limit,
-        } => to_binary(&queries::unbond_requests_by_batch(deps, id, start_after, limit)?),
+        } => to_json_binary(&queries::unbond_requests_by_batch(deps, id, start_after, limit)?),
         QueryMsg::UnbondRequestsByUser {
             user,
             start_after,
             limit,
-        } => to_binary(&queries::unbond_requests_by_user(deps, user, start_after, limit)?),
+        } => to_json_binary(&queries::unbond_requests_by_user(deps, user, start_after, limit)?),
 
         QueryMsg::UnbondRequestsByUserDetails {
             user,
             start_after,
             limit,
-        } => to_binary(&queries::unbond_requests_by_user_details(
+        } => to_json_binary(&queries::unbond_requests_by_user_details(
             deps,
             user,
             start_after,
@@ -243,7 +242,7 @@ pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<
         QueryMsg::ExchangeRates {
             start_after,
             limit,
-        } => to_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
+        } => to_json_binary(&queries::query_exchange_rates(deps, env, start_after, limit)?),
     }
 }
 

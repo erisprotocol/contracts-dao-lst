@@ -12,7 +12,7 @@ use astroport::asset::{native_asset_info, token_asset_info, AssetInfoExt, PairIn
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response,
+    from_json, to_json_binary, Binary, CosmosMsg, Deps, DepsMut, Env, MessageInfo, Response,
     StdResult, Storage,
 };
 use cw2::set_contract_version;
@@ -71,7 +71,7 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> C
 }
 
 fn receive(deps: DepsMut, env: Env, info: MessageInfo, cw20_msg: Cw20ReceiveMsg) -> ContractResult {
-    match from_binary(&cw20_msg.msg)? {
+    match from_json(&cw20_msg.msg)? {
         ReceiveMsg::Swap {
             to,
             ..
@@ -136,8 +136,8 @@ fn callback(
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Config {} => to_binary(&get_config(deps.storage)?),
-        QueryMsg::Pair {} => to_binary(&query_pair(deps, env)?),
+        QueryMsg::Config {} => to_json_binary(&get_config(deps.storage)?),
+        QueryMsg::Pair {} => to_json_binary(&query_pair(deps, env)?),
     }
 }
 
