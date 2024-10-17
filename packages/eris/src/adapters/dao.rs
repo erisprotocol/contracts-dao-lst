@@ -1,3 +1,4 @@
+use crate::hub::DaoInterface;
 use astroport::asset::AssetInfo;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
@@ -8,8 +9,6 @@ use cw20::{Cw20ExecuteMsg, Expiration};
 use eris_chain_adapter::types::CustomMsgType;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-
-use crate::hub::DaoInterface;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -238,6 +237,12 @@ pub enum DaoDaoExecuteMsg {
     },
     Claim {},
 }
+#[cw_serde]
+pub enum DaoDaoRewardsExecuteMsg {
+    Claim {
+        id: u64,
+    },
+}
 
 #[cw_serde]
 pub enum DaoDaoProposalSingleExecuteMsg {
@@ -377,6 +382,19 @@ impl DaoInterface<Addr> {
                 DaoInterface::DaoDao {
                     ..
                 } => Err(StdError::generic_err("cw20 not supported for daodao")),
+
+                DaoInterface::DaoDaoV2 {
+                    staking,
+                    ..
+                } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: contract_addr.to_string(),
+                    msg: to_json_binary(&Cw20ExecuteMsg::Send {
+                        contract: staking.to_string(),
+                        amount,
+                        msg: to_json_binary(&DaoDaoExecuteMsg::Stake {})?,
+                    })?,
+                    funds: vec![],
+                })),
             },
             AssetInfo::NativeToken {
                 denom,
@@ -395,6 +413,18 @@ impl DaoInterface<Addr> {
                     msg: to_json_binary(&cw4_stake::msg::ExecuteMsg::Bond {})?,
                     funds: vec![coin(amount.u128(), denom)],
                 })),
+                DaoInterface::Alliance {
+                    addr,
+                } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                    contract_addr: addr.to_string(),
+                    msg: to_json_binary(
+                        &alliance_protocol::alliance_protocol::ExecuteMsg::Stake {},
+                    )?,
+                    funds: vec![coin(amount.u128(), denom)],
+                })),
+                DaoInterface::Capa {
+                    ..
+                } => Err(StdError::generic_err("native_token not supported for capa")),
                 DaoInterface::DaoDao {
                     staking,
                     ..
@@ -403,16 +433,14 @@ impl DaoInterface<Addr> {
                     msg: to_json_binary(&DaoDaoExecuteMsg::Stake {})?,
                     funds: vec![coin(amount.u128(), denom)],
                 })),
-                DaoInterface::Alliance {
-                    addr,
+                DaoInterface::DaoDaoV2 {
+                    staking,
+                    ..
                 } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-                    contract_addr: addr.to_string(),
-                    msg: to_json_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::Stake {})?,
+                    contract_addr: staking.to_string(),
+                    msg: to_json_binary(&DaoDaoExecuteMsg::Stake {})?,
                     funds: vec![coin(amount.u128(), denom)],
                 })),
-                DaoInterface::Capa {
-                    ..
-                } => Err(StdError::generic_err("native_token not supported for capa")),
             },
         }
     }
@@ -456,6 +484,16 @@ impl DaoInterface<Addr> {
                 funds: vec![],
             })),
             DaoInterface::DaoDao {
+                staking,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: staking.to_string(),
+                msg: to_json_binary(&DaoDaoExecuteMsg::Unstake {
+                    amount,
+                })?,
+                funds: vec![],
+            })),
+            DaoInterface::DaoDaoV2 {
                 staking,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -520,6 +558,14 @@ impl DaoInterface<Addr> {
                 msg: to_json_binary(&DaoDaoExecuteMsg::Claim {})?,
                 funds: vec![],
             })),
+            DaoInterface::DaoDaoV2 {
+                staking,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: staking.to_string(),
+                msg: to_json_binary(&DaoDaoExecuteMsg::Claim {})?,
+                funds: vec![],
+            })),
             DaoInterface::Alliance {
                 ..
             }
@@ -529,18 +575,18 @@ impl DaoInterface<Addr> {
         }
     }
 
-    pub fn claim_rewards_msg(
+    pub fn claim_rewards_msgs(
         &self,
         env: &Env,
         utoken: &AssetInfo,
         native_denoms: Vec<String>,
         cw20_assets: Vec<String>,
-    ) -> StdResult<CosmosMsg<CustomMsgType>> {
+    ) -> StdResult<Vec<CosmosMsg<CustomMsgType>>> {
         match &self {
             DaoInterface::Enterprise {
                 fund_distributor,
                 ..
-            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
                 msg: to_json_binary(&EnterpriseDistributorExecuteMsg::ClaimRewards(
                     EnterpriseClaimRewardsMsg {
@@ -550,11 +596,11 @@ impl DaoInterface<Addr> {
                     },
                 ))?,
                 funds: vec![],
-            })),
+            })]),
             DaoInterface::EnterpriseV2 {
                 distributor,
                 ..
-            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: distributor.to_string(),
                 msg: to_json_binary(&EnterpriseDistributorExecuteMsg::ClaimRewards(
                     EnterpriseClaimRewardsMsg {
@@ -564,44 +610,63 @@ impl DaoInterface<Addr> {
                     },
                 ))?,
                 funds: vec![],
-            })),
+            })]),
             DaoInterface::Cw4 {
                 fund_distributor,
                 ..
-            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: fund_distributor.to_string(),
                 msg: to_json_binary(&Cw4DistributorExecuteMsg::ClaimRewards(Cw4ClaimRewardsMsg {
                     user: env.contract.address.to_string(),
                     native_denoms: None,
                 }))?,
                 funds: vec![],
-            })),
+            })]),
             DaoInterface::DaoDao {
                 cw_rewards,
                 ..
-            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: cw_rewards.to_string(),
-                msg: to_json_binary(&CwRewardsExecuteMsg::ClaimRewards(CwRewardsClaimRewardsMsg {
-                    callback: None,
-                }))?,
-                funds: vec![],
-            })),
-            DaoInterface::Alliance {
-                addr,
-            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr: addr.to_string(),
-                msg: to_json_binary(&alliance_protocol::alliance_protocol::ExecuteMsg::ClaimRewards(
-                    to_cw_asset_info(utoken),
+                msg: to_json_binary(&CwRewardsExecuteMsg::ClaimRewards(
+                    CwRewardsClaimRewardsMsg {
+                        callback: None,
+                    },
                 ))?,
                 funds: vec![],
-            })),
+            })]),
+            DaoInterface::DaoDaoV2 {
+                rewards: cw_rewards,
+                ..
+            } => Ok(cw_rewards
+                .iter()
+                .map(|(contract, claim_id)| {
+                    Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                        contract_addr: contract.to_string(),
+                        msg: to_json_binary(&DaoDaoRewardsExecuteMsg::Claim {
+                            id: *claim_id,
+                        })?,
+                        funds: vec![],
+                    }))
+                })
+                .collect::<StdResult<Vec<_>>>()?),
+            DaoInterface::Alliance {
+                addr,
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: addr.to_string(),
+                msg: to_json_binary(
+                    &alliance_protocol::alliance_protocol::ExecuteMsg::ClaimRewards(
+                        to_cw_asset_info(utoken),
+                    ),
+                )?,
+                funds: vec![],
+            })]),
             DaoInterface::Capa {
                 gov,
-            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+            } => Ok(vec![CosmosMsg::Wasm(WasmMsg::Execute {
                 contract_addr: gov.to_string(),
                 msg: to_json_binary(&CapaExecuteMsg::Claim {})?,
                 funds: vec![],
-            })),
+            })]),
         }
     }
 
@@ -662,6 +727,23 @@ impl DaoInterface<Addr> {
                 funds: vec![],
             })),
             DaoInterface::DaoDao {
+                gov,
+                ..
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: gov.to_string(),
+                msg: to_json_binary(&DaoDaoProposalSingleExecuteMsg::Vote {
+                    rationale: None,
+                    proposal_id,
+                    vote: match outcome {
+                        VoteOption::Yes => Vote::Yes,
+                        VoteOption::No => Vote::No,
+                        VoteOption::Abstain => Vote::Abstain,
+                        VoteOption::NoWithVeto => Vote::No,
+                    },
+                })?,
+                funds: vec![],
+            })),
+            DaoInterface::DaoDaoV2 {
                 gov,
                 ..
             } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
@@ -782,6 +864,29 @@ impl DaoInterface<Addr> {
                 })
             },
             DaoInterface::DaoDao {
+                gov,
+                ..
+            } => {
+                let result: DaoDaoProposalResponse = querier.query_wasm_smart(
+                    gov,
+                    &DaoDaoQueryMsg::Proposal {
+                        proposal_id,
+                    },
+                )?;
+
+                Ok(ProposalResponse {
+                    end_time_s: match result.proposal.expiration {
+                        Expiration::AtHeight(_) => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                        Expiration::AtTime(time) => Ok(time.seconds()),
+                        Expiration::Never {} => {
+                            Err(StdError::generic_err("not supported expiry type."))
+                        },
+                    }?,
+                })
+            },
+            DaoInterface::DaoDaoV2 {
                 gov,
                 ..
             } => {

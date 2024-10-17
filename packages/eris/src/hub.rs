@@ -70,8 +70,17 @@ pub enum DaoInterface<T> {
         staking: T,
         // calling vote (CW3)
         gov: T,
-        // calling claimrewards
+        /// entropic variant of rewards claimable
         cw_rewards: T,
+    },
+    //
+    DaoDaoV2 {
+        // calling bond, unbond, claim  (CW4)
+        staking: T,
+        // calling vote (CW3)
+        gov: T,
+        // calling claim with id on each of the contracts
+        rewards: Vec<(T, u64)>,
     },
     Alliance {
         addr: T,
@@ -127,6 +136,19 @@ impl DaoInterface<String> {
                 staking: api.addr_validate(addr)?,
                 gov: api.addr_validate(gov)?,
                 cw_rewards: api.addr_validate(fund_distributor)?,
+            },
+            DaoInterface::DaoDaoV2 {
+                staking: addr,
+                gov,
+                rewards: fund_distributor,
+            } => DaoInterface::DaoDaoV2 {
+                staking: api.addr_validate(addr)?,
+                gov: api.addr_validate(gov)?,
+                rewards: fund_distributor
+                    .clone()
+                    .into_iter()
+                    .map(|(contract, claim_id)| Ok((api.addr_validate(&contract)?, claim_id)))
+                    .collect::<StdResult<Vec<_>>>()?,
             },
         })
     }
@@ -389,6 +411,9 @@ pub struct StakeToken {
     pub total_utoken_bonded: Uint128,
     // supply of the stake token
     pub total_supply: Uint128,
+
+    #[serde(default)]
+    pub disabled: bool,
 }
 
 #[cw_serde]
@@ -494,4 +519,17 @@ pub enum ClaimType {
     },
 }
 
-pub type MigrateMsg = Empty;
+#[cw_serde]
+pub struct MigrateMsg {
+    pub action: Option<MigrateAction>,
+}
+
+#[cw_serde]
+pub enum MigrateAction {
+    Disable,
+    Unstake,
+    Claim,
+    ReconcileAll,
+    Stake,
+    Enable,
+}

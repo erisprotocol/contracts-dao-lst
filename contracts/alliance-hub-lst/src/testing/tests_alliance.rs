@@ -489,8 +489,8 @@ fn harvesting() {
 
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
-        res.messages[0].msg,
-        stake.dao_interface.claim_rewards_msg(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
+        vec![res.messages[0].msg.clone()],
+        stake.dao_interface.claim_rewards_msgs(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
     );
     assert_eq!(res.messages[1], check_received_coin(0, 0));
 
@@ -532,8 +532,8 @@ fn harvesting_with_balance() {
 
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
-        res.messages[0].msg,
-        stake.dao_interface.claim_rewards_msg(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
+        vec![res.messages[0].msg.clone()],
+        stake.dao_interface.claim_rewards_msgs(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
     );
     assert_eq!(res.messages[1], check_received_coin(1000, 100));
 

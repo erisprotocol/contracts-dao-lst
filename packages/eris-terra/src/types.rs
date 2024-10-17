@@ -4,6 +4,8 @@ use cosmwasm_std::{Addr, Coin, Empty, Uint128};
 
 use crate::custom_execute_msg::CustomExecuteMsg;
 
+pub use astroport::asset::AssetInfoExt;
+
 #[cw_serde]
 pub enum WithdrawType {
     Dex {

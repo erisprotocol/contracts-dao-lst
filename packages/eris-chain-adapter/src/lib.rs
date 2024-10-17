@@ -9,6 +9,7 @@ pub mod types {
     use eris_chain_shared::chain_trait::ChainInterface;
 
     pub use eris_kujira::chain::KujiraChain;
+    pub use eris_kujira::types::AssetInfoExt;
     pub use eris_kujira::types::CoinType;
     pub use eris_kujira::types::CustomMsgType;
     pub use eris_kujira::types::CustomQueryType;
@@ -20,7 +21,6 @@ pub mod types {
     pub use eris_kujira::types::MultiSwapRouterType;
     pub use eris_kujira::types::StageType;
     pub use eris_kujira::types::WithdrawType;
-    pub use eris_kujira::types::AssetInfoExt;
 
     pub const CHAIN_TYPE: &str = "kujira";
 
@@ -129,6 +129,7 @@ pub mod types {
 
     use eris_terra::chain::Chain;
     pub use eris_terra::types::get_asset;
+    pub use eris_terra::types::AssetInfoExt;
     pub use eris_terra::types::CoinType;
     pub use eris_terra::types::CustomMsgType;
     pub use eris_terra::types::CustomQueryType;
@@ -138,8 +139,6 @@ pub mod types {
     pub use eris_terra::types::MultiSwapRouterType;
     pub use eris_terra::types::StageType;
     pub use eris_terra::types::WithdrawType;
-
-    pub use astroport::asset::AssetInfoExt;
 
     pub const CHAIN_TYPE: &str = "terra";
 

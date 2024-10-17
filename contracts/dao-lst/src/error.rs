@@ -84,4 +84,7 @@ pub enum ContractError {
 
     #[error("Expected balance to be {0}, but it is {1}")]
     ExpectingBalance(Uint128, Uint128),
+
+    #[error("Action disabled for maintenance")]
+    DisabledMaintenance {},
 }

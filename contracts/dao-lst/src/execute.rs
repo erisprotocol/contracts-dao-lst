@@ -2,8 +2,8 @@ use std::cmp;
 
 use astroport::asset::{native_asset, native_asset_info, Asset, AssetInfoExt};
 use cosmwasm_std::{
-    attr, to_json_binary, Addr, Attribute, CosmosMsg, Decimal, DepsMut, Env, Event, Order, Response,
-    StdResult, Uint128, WasmMsg,
+    attr, to_json_binary, Addr, Attribute, CosmosMsg, Decimal, DepsMut, Env, Event, Order,
+    Response, StdResult, Uint128, WasmMsg,
 };
 use cw2::set_contract_version;
 use eris::adapters::asset::AssetEx;
@@ -97,6 +97,7 @@ pub fn instantiate(
             denom: full_denom.clone(),
             total_utoken_bonded: Uint128::zero(),
             total_supply: Uint128::zero(),
+            disabled: false,
         },
     )?;
 
@@ -125,6 +126,7 @@ pub fn bond(
     receiver: Addr,
     donate: bool,
 ) -> ContractResult {
+    assert_not_disabled(&stake)?;
     // Query the current supply of Staking Token and compute the amount to mint
     let ustake_supply = stake.total_supply;
     let ustake_to_mint = if donate {
@@ -166,6 +168,13 @@ pub fn bond(
         .add_attribute("action", "erishub/bond"))
 }
 
+fn assert_not_disabled(stake: &StakeToken) -> Result<(), ContractError> {
+    if stake.disabled {
+        return Err(ContractError::DisabledMaintenance {});
+    }
+    Ok(())
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn harvest(
     deps: DepsMut<CustomQueryType>,
@@ -179,9 +188,10 @@ pub fn harvest(
 ) -> ContractResult {
     let state = State::default();
     let stake = state.stake_token.load(deps.storage)?;
+    assert_not_disabled(&stake)?;
 
     // 1. Withdraw rewards
-    let claim_msg = stake.dao_interface.claim_rewards_msg(
+    let claim_msgs = stake.dao_interface.claim_rewards_msgs(
         &env,
         &stake.utoken,
         native_denoms.unwrap_or_default(),
@@ -220,7 +230,7 @@ pub fn harvest(
 
     Ok(Response::new()
         // 1. Withdraw rewards
-        .add_message(claim_msg)
+        .add_messages(claim_msgs)
         // 2. Withdraw / Destruct LPs
         .add_optional_callback(&env, withdrawal_msg)?
         // 3. swap - multiple single stage swaps
@@ -454,10 +464,10 @@ fn assert_received_amount_msg(
 
 /// NOTE:
 /// 1. When delegation Token here, we don't need to use a `SubMsg` to handle the received coins,
-/// because we have already withdrawn all claimable staking rewards previously in the same atomic
-/// execution.
+///    because we have already withdrawn all claimable staking rewards previously in the same atomic
+///    execution.
 /// 2. Same as with `bond`, in the latest implementation we only delegate staking rewards with the
-/// validator that has the smallest delegation amount.
+///    validator that has the smallest delegation amount.
 pub fn reinvest(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let fee_config = state.fee_config.load(deps.storage)?;
@@ -625,11 +635,13 @@ fn add_to_received_coins(
 pub fn queue_unbond(
     deps: DepsMut<CustomQueryType>,
     env: Env,
+    stake: StakeToken,
     receiver: Addr,
     ustake_to_burn: Uint128,
 ) -> ContractResult {
-    let state = State::default();
+    assert_not_disabled(&stake)?;
 
+    let state = State::default();
     let mut pending_batch = state.pending_batch.load(deps.storage)?;
     pending_batch.ustake_to_burn += ustake_to_burn;
     state.pending_batch.save(deps.storage, &pending_batch)?;
@@ -676,6 +688,7 @@ pub fn queue_unbond(
 pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let mut stake = state.stake_token.load(deps.storage)?;
+    assert_not_disabled(&stake)?;
     let unbond_period = state.unbond_period.load(deps.storage)?;
     let pending_batch = state.pending_batch.load(deps.storage)?;
 
@@ -740,6 +753,7 @@ pub fn submit_batch(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult 
 pub fn reconcile(deps: DepsMut<CustomQueryType>, env: Env) -> ContractResult {
     let state = State::default();
     let stake = state.stake_token.load(deps.storage)?;
+    assert_not_disabled(&stake)?;
     let current_time = env.block.time.seconds();
 
     // Load batches that have not been reconciled
@@ -800,6 +814,9 @@ pub fn withdraw_unbonded(
     let state = State::default();
     let current_time = env.block.time.seconds();
 
+    let stake = state.stake_token.load(deps.storage)?;
+    assert_not_disabled(&stake)?;
+
     // NOTE: If the user has too many unclaimed requests, this may not fit in the WASM memory...
     // However, this is practically never going to happen. Who would create hundreds of unbonding
     // requests and never claim them?
@@ -849,7 +866,6 @@ pub fn withdraw_unbonded(
     if total_utoken_to_refund.is_zero() {
         return Err(ContractError::CantBeZero("withdrawable amount".into()));
     }
-    let stake = state.stake_token.load(deps.storage)?;
 
     let refund_msg = stake.utoken.with_balance(total_utoken_to_refund).transfer_msg(&receiver)?;
 

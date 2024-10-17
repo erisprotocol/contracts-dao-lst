@@ -996,7 +996,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-alliance-hub-lst-kujira"
+name = "eris-alliance-hub-lst-terra"
 version = "1.3.0"
 dependencies = [
  "alliance-protocol",
@@ -1071,8 +1071,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "eris-dao-lst-kujira"
-version = "1.4.0"
+name = "eris-dao-lst-terra"
+version = "1.5.0"
 dependencies = [
  "astroport 2.8.0",
  "cosmwasm-schema",

@@ -1,6 +1,6 @@
 [package]
-name = "eris-dao-lst-kujira"
-version = "1.4.0"
+name = "eris-dao-lst-terra"
+version = "1.5.0"
 authors = ["devs <devs@erisprotocol.com>"]
 edition = "2018"
 license = "GPL-3.0-or-later"
@@ -17,7 +17,7 @@ X-injective-X = []
 X-osmosis-X = []
 X-sei-X = []
 X-terra-X = []
-default = ["X-kujira-X"]
+default = ["X-terra-X"]
 library = []
 
 [dependencies]

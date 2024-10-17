@@ -3,8 +3,8 @@ use std::ops::Sub;
 use astroport::asset::{native_asset_info, AssetInfoExt};
 use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
 use cosmwasm_std::{
-    coin, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Event, Order, StdError, StdResult,
-    SubMsg, Uint128, VoteOption, WasmMsg,
+    coin, to_json_binary, Addr, BankMsg, Coin, CosmosMsg, Decimal, Event, Order, StdError,
+    StdResult, SubMsg, Uint128, VoteOption, WasmMsg,
 };
 use eris::DecimalCheckedOps;
 
@@ -138,6 +138,7 @@ fn bonding() {
             denom: stake.denom.clone(),
             total_supply: Uint128::new(1000000),
             total_utoken_bonded: Uint128::new(1000000),
+            disabled: false
         }
     );
 
@@ -345,8 +346,8 @@ fn harvesting() {
 
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
-        res.messages[0].msg,
-        stake.dao_interface.claim_rewards_msg(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
+        vec![res.messages[0].msg.clone()],
+        stake.dao_interface.claim_rewards_msgs(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
     );
     assert_eq!(res.messages[1], check_received_coin(0, 0));
 
@@ -385,8 +386,8 @@ fn harvesting_with_balance() {
 
     assert_eq!(res.messages.len(), 3);
     assert_eq!(
-        res.messages[0].msg,
-        stake.dao_interface.claim_rewards_msg(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
+        vec![res.messages[0].msg.clone()],
+        stake.dao_interface.claim_rewards_msgs(&mock_env(), &stake.utoken, vec![], vec![]).unwrap()
     );
     assert_eq!(res.messages[1], check_received_coin(1000, 100));
 

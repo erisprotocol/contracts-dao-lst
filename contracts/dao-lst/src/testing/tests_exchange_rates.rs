@@ -58,6 +58,7 @@ fn reinvesting_check_exchange_rates() {
             utoken: stake.utoken.clone(),
             denom: stake.denom.clone(),
             dao_interface: stake.dao_interface.clone(),
+            disabled: false
         }
     );
 

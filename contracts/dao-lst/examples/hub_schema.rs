@@ -1,10 +1,11 @@
 use cosmwasm_schema::write_api;
-use eris::hub::{ExecuteMsg, InstantiateMsg, QueryMsg};
+use eris::hub::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg};
 
 fn main() {
     write_api! {
         instantiate: InstantiateMsg,
         query: QueryMsg,
-        execute: ExecuteMsg
+        execute: ExecuteMsg,
+        migrate: MigrateMsg
     }
 }

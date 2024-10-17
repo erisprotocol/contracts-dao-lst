@@ -1,6 +1,7 @@
 use astroport::asset::token_asset_info;
 use cosmwasm_std::{
-    entry_point, from_json, to_json_binary,  Binary, Deps, DepsMut, Env, MessageInfo, Response, StdResult
+    attr, entry_point, from_json, to_json_binary, Binary, Deps, DepsMut, Env, MessageInfo, Order,
+    Response, StdResult,
 };
 use cw2::set_contract_version;
 
@@ -137,6 +138,7 @@ pub fn execute(
             execute::queue_unbond(
                 deps,
                 env,
+                stake_token,
                 api.addr_validate(&receiver.unwrap_or_else(|| info.sender.to_string()))?,
                 info.funds[0].amount,
             )
@@ -247,10 +249,82 @@ pub fn query(deps: Deps<CustomQueryType>, env: Env, msg: QueryMsg) -> StdResult<
 }
 
 #[entry_point]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> ContractResult {
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult {
     set_contract_version(deps.storage, CONTRACT_NAME, CONTRACT_VERSION)?;
 
+    let mut msgs = vec![];
+    let mut attrs = vec![];
+    if let Some(action) = msg.action {
+        let state = State::default();
+        let mut stake_token = state.stake_token.load(deps.storage)?;
+        match action {
+            eris::hub::MigrateAction::Disable => {
+                stake_token.disabled = true;
+                state.stake_token.save(deps.storage, &stake_token)?;
+                attrs.push(attr("action", "disable"));
+                attrs.push(attr("disabled", "true"));
+            },
+            eris::hub::MigrateAction::Unstake => {
+                let unstake_msg = stake_token
+                    .dao_interface
+                    .unbond_msg(&stake_token.utoken, stake_token.total_utoken_bonded)?;
+                msgs.push(unstake_msg);
+                attrs.push(attr("action", "unstake"));
+                attrs.push(attr("unstake", stake_token.total_utoken_bonded));
+            },
+            eris::hub::MigrateAction::Claim => {
+                let claim_msg = stake_token.dao_interface.claim_unbonded_msg()?;
+                msgs.push(claim_msg);
+                attrs.push(attr("action", "claim"));
+            },
+            eris::hub::MigrateAction::ReconcileAll => {
+                // Load batches that have not been reconciled
+                let all_batches = state
+                    .previous_batches
+                    .idx
+                    .reconciled
+                    .prefix(false.into())
+                    .range(deps.storage, None, None, Order::Ascending)
+                    .map(|item| {
+                        let (_, v) = item?;
+                        Ok(v)
+                    })
+                    .collect::<StdResult<Vec<_>>>()?;
+
+                let mut ids: Vec<String> = vec![];
+                for mut batch in all_batches {
+                    batch.reconciled = true;
+                    ids.push(batch.id.to_string());
+                    state.previous_batches.save(deps.storage, batch.id, &batch)?;
+                }
+
+                attrs.push(attr("action", "reconcile"));
+                attrs.push(attr("ids", ids.join(",")));
+            },
+            eris::hub::MigrateAction::Stake => {
+                let stake_msg = stake_token.dao_interface.deposit_msg(
+                    &stake_token.utoken,
+                    stake_token.total_utoken_bonded,
+                    env.contract.address.to_string(),
+                )?;
+
+                msgs.push(stake_msg);
+                attrs.push(attr("action", "stake"));
+                attrs.push(attr("stake", stake_token.total_utoken_bonded));
+            },
+            eris::hub::MigrateAction::Enable => {
+                let mut stake_token = state.stake_token.load(deps.storage)?;
+                stake_token.disabled = false;
+                state.stake_token.save(deps.storage, &stake_token)?;
+                attrs.push(attr("action", "enable"));
+                attrs.push(attr("disabled", "false"));
+            },
+        }
+    }
+
     Ok(Response::new()
+        .add_messages(msgs)
         .add_attribute("new_contract_name", CONTRACT_NAME)
-        .add_attribute("new_contract_version", CONTRACT_VERSION))
+        .add_attribute("new_contract_version", CONTRACT_VERSION)
+        .add_attributes(attrs))
 }

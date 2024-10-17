@@ -144,7 +144,7 @@ pub fn harvest(
     let stake = state.stake_token.load(deps.storage)?;
 
     // 1. Withdraw rewards
-    let claim_msg = stake.dao_interface.claim_rewards_msg(
+    let claim_msgs = stake.dao_interface.claim_rewards_msgs(
         &env,
         &stake.utoken,
         native_denoms.unwrap_or_default(),
@@ -192,7 +192,7 @@ pub fn harvest(
 
     Ok(Response::new()
         // 1. Withdraw rewards
-        .add_message(claim_msg)
+        .add_messages(claim_msgs)
         // 2. Withdraw / Destruct LPs
         .add_optional_callback_alliance(&env, withdrawal_msg)?
         // 3. swap - multiple single stage swaps
