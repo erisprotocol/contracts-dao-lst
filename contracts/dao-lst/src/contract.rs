@@ -258,6 +258,12 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult {
         let state = State::default();
         let mut stake_token = state.stake_token.load(deps.storage)?;
         match action {
+            eris::hub::MigrateAction::AllowSubmit => {
+
+            let mut pending = state.pending_batch.load(deps.storage)?;
+            pending.est_unbond_start_time = env.block.time.seconds() ;
+            state.pending_batch.save(deps.storage, &pending)?;
+        },
             eris::hub::MigrateAction::Disable => {
                 stake_token.disabled = true;
                 state.stake_token.save(deps.storage, &stake_token)?;
@@ -294,6 +300,9 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult {
                 let mut ids: Vec<String> = vec![];
                 for mut batch in all_batches {
                     batch.reconciled = true;
+                    if batch.est_unbond_end_time > env.block.time.seconds() {
+                        batch.est_unbond_end_time = env.block.time.seconds();
+                    }
                     ids.push(batch.id.to_string());
                     state.previous_batches.save(deps.storage, batch.id, &batch)?;
                 }

@@ -526,6 +526,7 @@ pub struct MigrateMsg {
 
 #[cw_serde]
 pub enum MigrateAction {
+    AllowSubmit,
     Disable,
     Unstake,
     Claim,
