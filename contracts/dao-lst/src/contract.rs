@@ -259,11 +259,11 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult {
         let mut stake_token = state.stake_token.load(deps.storage)?;
         match action {
             eris::hub::MigrateAction::AllowSubmit => {
-
-            let mut pending = state.pending_batch.load(deps.storage)?;
-            pending.est_unbond_start_time = env.block.time.seconds() ;
-            state.pending_batch.save(deps.storage, &pending)?;
-        },
+                let mut pending = state.pending_batch.load(deps.storage)?;
+                pending.est_unbond_start_time = env.block.time.seconds();
+                state.pending_batch.save(deps.storage, &pending)?;
+                attrs.push(attr("action", "allow_submit"));
+            },
             eris::hub::MigrateAction::Disable => {
                 stake_token.disabled = true;
                 state.stake_token.save(deps.storage, &stake_token)?;
@@ -310,7 +310,9 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult {
                 attrs.push(attr("action", "reconcile"));
                 attrs.push(attr("ids", ids.join(",")));
             },
-            eris::hub::MigrateAction::Stake{ amount} => {
+            eris::hub::MigrateAction::Stake {
+                amount,
+            } => {
                 let stake_msg = stake_token.dao_interface.deposit_msg(
                     &stake_token.utoken,
                     amount,
