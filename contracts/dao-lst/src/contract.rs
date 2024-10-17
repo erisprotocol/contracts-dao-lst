@@ -310,16 +310,16 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> ContractResult {
                 attrs.push(attr("action", "reconcile"));
                 attrs.push(attr("ids", ids.join(",")));
             },
-            eris::hub::MigrateAction::Stake => {
+            eris::hub::MigrateAction::Stake{ amount} => {
                 let stake_msg = stake_token.dao_interface.deposit_msg(
                     &stake_token.utoken,
-                    stake_token.total_utoken_bonded,
+                    amount,
                     env.contract.address.to_string(),
                 )?;
 
                 msgs.push(stake_msg);
                 attrs.push(attr("action", "stake"));
-                attrs.push(attr("stake", stake_token.total_utoken_bonded));
+                attrs.push(attr("stake", amount));
             },
             eris::hub::MigrateAction::Enable => {
                 let mut stake_token = state.stake_token.load(deps.storage)?;

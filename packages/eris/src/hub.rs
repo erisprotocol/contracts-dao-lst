@@ -531,6 +531,8 @@ pub enum MigrateAction {
     Unstake,
     Claim,
     ReconcileAll,
-    Stake,
+    Stake {
+        amount: Uint128,
+    },
     Enable,
 }
