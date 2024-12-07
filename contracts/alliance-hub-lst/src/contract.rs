@@ -15,7 +15,7 @@ use eris_chain_adapter::types::CustomQueryType;
 use crate::constants::{CONTRACT_NAME, CONTRACT_VERSION};
 use crate::error::{ContractError, ContractResult};
 use crate::state::State;
-use crate::{execute, queries};
+use crate::{execute, gov, queries};
 
 #[entry_point]
 pub fn instantiate(
@@ -139,6 +139,10 @@ pub fn execute(
             router,
             info.sender,
         ),
+        ExecuteMsg::Vote {
+            proposal_id,
+            vote,
+        } => gov::vote(deps, env, info, proposal_id, vote),
         ExecuteMsg::Callback(callback_msg) => callback(deps, env, info, callback_msg),
 
         ExecuteMsg::UpdateConfig {
@@ -149,6 +153,7 @@ pub fn execute(
             allow_donations,
             withdrawals_preset,
             default_max_spread,
+            vote_operator,
         } => execute::update_config(
             env,
             deps,
@@ -156,6 +161,7 @@ pub fn execute(
             protocol_fee_contract,
             protocol_reward_fee,
             operator,
+            vote_operator,
             stages_preset,
             withdrawals_preset,
             allow_donations,

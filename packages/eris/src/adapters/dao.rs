@@ -675,7 +675,7 @@ impl DaoInterface<Addr> {
         proposal_id: u64,
         outcome: VoteOption,
         _voter: Addr,
-        _amount: Uint128,
+        amount: Uint128,
     ) -> StdResult<CosmosMsg<CustomMsgType>> {
         match &self {
             DaoInterface::Enterprise {
@@ -762,29 +762,26 @@ impl DaoInterface<Addr> {
             })),
             DaoInterface::Alliance {
                 ..
-            }
-            | DaoInterface::Capa {
-                ..
-            } => Err(StdError::generic_err("voting not supported for alliance, capa"))?,
-            // DaoInterface::Capa {
-            //     ..
-            // } => Err(StdError::generic_err("voting not supported for capa"))?,
-            // Ok(CosmosMsg::Wasm(WasmMsg::Execute {
-            //     contract_addr: gov.to_string(),
-            //     msg: to_json_binary(&CapaExecuteMsg::CastVote {
-            //         poll_id: proposal_id,
-            //         vote: match outcome {
-            //             VoteOption::Yes => CapaVoteOption::Yes,
-            //             VoteOption::No => CapaVoteOption::No,
-            //             VoteOption::Abstain => {
-            //                 Err(StdError::generic_err("voting abstain not supported for capa"))?
-            //             },
-            //             VoteOption::NoWithVeto => CapaVoteOption::No,
-            //         },
-            //         amount: ,
-            //     })?,
-            //     funds: vec![],
-            // })),
+            } => Err(StdError::generic_err("voting not supported for alliance"))?,
+
+            DaoInterface::Capa {
+                gov,
+            } => Ok(CosmosMsg::Wasm(WasmMsg::Execute {
+                contract_addr: gov.to_string(),
+                msg: to_json_binary(&CapaExecuteMsg::CastVote {
+                    poll_id: proposal_id,
+                    vote: match outcome {
+                        VoteOption::Yes => CapaVoteOption::Yes,
+                        VoteOption::No => CapaVoteOption::No,
+                        VoteOption::Abstain => {
+                            Err(StdError::generic_err("voting abstain not supported for capa"))?
+                        },
+                        VoteOption::NoWithVeto => CapaVoteOption::No,
+                    },
+                    amount,
+                })?,
+                funds: vec![],
+            })),
         }
     }
 

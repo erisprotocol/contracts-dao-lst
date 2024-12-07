@@ -13,6 +13,8 @@ pub struct State<'a> {
     pub owner: Item<'a, Addr>,
     /// Account who can call harvest
     pub operator: Item<'a, Addr>,
+    /// Account who can call vote
+    pub vote_operator: Item<'a, Addr>,
     /// Stages that must be used by permissionless users
     pub stages_preset: Item<'a, Vec<Vec<SingleSwapConfig>>>,
     /// Withdraws that must be used by permissionless users
@@ -42,6 +44,7 @@ impl Default for State<'static> {
             owner: Item::new("owner"),
             new_owner: Item::new("new_owner"),
             operator: Item::new("operator"),
+            vote_operator: Item::new("vote_operator"),
             stages_preset: Item::new("stages_preset"),
             withdrawals_preset: Item::new("withdrawals_preset"),
             stake_token: Item::new("stake_token"),
@@ -74,6 +77,21 @@ impl<'a> State<'a> {
             Ok(())
         } else {
             Err(ContractError::UnauthorizedSenderNotOperator {})
+        }
+    }
+
+    pub fn assert_vote_operator(
+        &self,
+        storage: &dyn Storage,
+        sender: &Addr,
+    ) -> Result<(), ContractError> {
+        let vote_operator =
+            self.vote_operator.load(storage).map_err(|_| ContractError::NoVoteOperatorSet {})?;
+
+        if *sender == vote_operator {
+            Ok(())
+        } else {
+            Err(ContractError::UnauthorizedSenderNotVoteOperator {})
         }
     }
 

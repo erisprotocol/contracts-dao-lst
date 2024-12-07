@@ -997,7 +997,7 @@ dependencies = [
 
 [[package]]
 name = "eris-alliance-hub-lst-terra"
-version = "1.3.0"
+version = "1.4.0"
 dependencies = [
  "alliance-protocol",
  "astroport 2.8.0",

@@ -425,6 +425,7 @@ fn donating() {
             withdrawals_preset: None,
             allow_donations: Some(true),
             default_max_spread: None,
+            vote_operator: None,
         },
     )
     .unwrap();
@@ -974,6 +975,7 @@ fn unbond_after_donate() {
             withdrawals_preset: None,
             allow_donations: Some(true),
             default_max_spread: None,
+            vote_operator: None,
         },
     )
     .unwrap();
@@ -1128,6 +1130,7 @@ fn update_fee() {
             withdrawals_preset: None,
             allow_donations: None,
             default_max_spread: None,
+            vote_operator: None,
         },
     )
     .unwrap_err();
@@ -1145,6 +1148,7 @@ fn update_fee() {
             withdrawals_preset: None,
             allow_donations: None,
             default_max_spread: None,
+            vote_operator: None,
         },
     )
     .unwrap_err();
@@ -1162,6 +1166,7 @@ fn update_fee() {
             withdrawals_preset: None,
             allow_donations: None,
             default_max_spread: None,
+            vote_operator: None,
         },
     )
     .unwrap();

@@ -1,6 +1,8 @@
 use astroport::asset::{Asset, AssetInfo};
 use cosmwasm_schema::{cw_serde, QueryResponses};
-use cosmwasm_std::{to_json_binary, Addr, CosmosMsg, Decimal, Empty, StdResult, Uint128, WasmMsg};
+use cosmwasm_std::{
+    to_json_binary, Addr, CosmosMsg, Decimal, Empty, StdResult, Uint128, VoteOption, WasmMsg,
+};
 use cw20::Cw20ReceiveMsg;
 use eris_chain_adapter::types::{
     CustomMsgType, DenomType, MultiSwapRouterType, StageType, WithdrawType,
@@ -72,6 +74,11 @@ pub enum ExecuteMsg {
         stages: Option<Vec<Vec<SingleSwapConfig>>>,
         router: Option<MultiSwapRouter>,
     },
+    /// Vote on a proposal (only allowed by the vote_operator)
+    Vote {
+        proposal_id: u64,
+        vote: VoteOption,
+    },
 
     /// Callbacks; can only be invoked by the contract itself
     Callback(CallbackMsg),
@@ -92,6 +99,8 @@ pub enum ExecuteMsg {
         allow_donations: Option<bool>,
         /// Update the default max_spread
         default_max_spread: Option<u64>,
+        /// Sets a new operator
+        vote_operator: Option<String>,
     },
 
     /// Submit an unbonding request to the current unbonding queue; automatically invokes `unbond`
